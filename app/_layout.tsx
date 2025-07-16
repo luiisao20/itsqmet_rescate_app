@@ -1,15 +1,20 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { useFonts } from "expo-font";
+import { Slot } from "expo-router";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import "react-native-reanimated";
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+import "../global.css";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    "Inter_pt-Bold": require("@/assets/fonts/Inter_pt-Bold.ttf"),
+    "Inter_pt-ExtraBold": require("@/assets/fonts/Inter_pt-ExtraBold.ttf"),
+    "Inter_pt-Light": require("@/assets/fonts/Inter_pt-Light.ttf"),
+    "Inter_pt-Medium": require("@/assets/fonts/Inter_pt-Medium.ttf"),
+    "Inter_pt-Regular": require("@/assets/fonts/Inter_pt-Regular.ttf"),
+    "Inter_pt-SemiBold": require("@/assets/fonts/Inter_pt-SemiBold.ttf"),
+    "Inter_pt-Thin": require("@/assets/fonts/Inter_pt-Thin.ttf"),
   });
 
   if (!loaded) {
@@ -18,12 +23,10 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <Slot />
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 }
