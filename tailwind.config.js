@@ -10,7 +10,9 @@ module.exports = {
         card: '#D8E4DC',
         color: '#2F5744',
         button: '#7CA893',
-        icons: '#CFE5E0'
+        icons: '#CFE5E0',
+        danger: '#F44336',
+        success: '#5FAF68'
       },
       fontFamily: {
         thin: ["Inter_pt-Thin"],

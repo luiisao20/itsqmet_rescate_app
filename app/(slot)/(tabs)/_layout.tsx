@@ -1,8 +1,14 @@
-import { Tabs } from "expo-router";
+import { router, Tabs } from "expo-router";
 import React from "react";
-import { Platform, Pressable } from "react-native";
+import { Platform, Pressable, Text } from "react-native";
 
-import { IconCar, IconGive, IconHome, IconPack, IconProfile } from "@/components/ui/Icons";
+import {
+  IconCar,
+  IconGive,
+  IconHome,
+  IconPack,
+  IconProfile,
+} from "@/components/ui/Icons";
 
 export default function TabLayout() {
   return (
@@ -18,8 +24,14 @@ export default function TabLayout() {
           default: {},
         }),
         headerRight: () => (
-          <Pressable className="active:opacity-50 p-2 bg-button text-center mx-4 rounded-full">
+          <Pressable
+            onPress={() => router.push("/(slot)/(cart)")}
+            className="active:opacity-50 p-2 bg-button text-center mx-4 rounded-full flex flex-row justify-center items-center"
+          >
             <IconCar color="white" />
+            <Text className="text-white pl-4 text-lg font-medium">
+              Ir a carrito
+            </Text>
           </Pressable>
         ),
         headerStyle: { backgroundColor: "#D8E4DC" },
