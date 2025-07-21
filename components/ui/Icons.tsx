@@ -20,12 +20,20 @@ export const IconPack = ({ size = 24, color = "black", className }: Props) => (
   <MaterialCommunityIcons name="package" size={size} color={color} className={className} />
 );
 
+export const IconMap = ({ size = 24, color = "black", className }: Props) => (
+  <MaterialCommunityIcons name="map-marker-right" size={size} color={color} className={className} />
+);
+
 export const IconTrash = ({ size = 24, color = "black", className }: Props) => (
   <MaterialCommunityIcons name="trash-can" size={size} color={color} className={className} />
 );
 
 export const IconGive = ({ size = 24, color = "black", className }: Props) => (
   <FontAwesome5 name="hand-holding-heart" size={size} color={color} className={className} />
+);
+
+export const IconMapPin = ({ size = 24, color = "black", className }: Props) => (
+  <FontAwesome5 name="map-pin" size={size} color={color} className={className} />
 );
 
 export const IconCard = ({ size = 24, color = "black", className }: Props) => (
@@ -36,8 +44,16 @@ export const IconProfile = ({ size = 24, color = "black", className }: Props) =>
   <Ionicons name="person" size={size} color={color} className={className} />
 );
 
+export const IconCash = ({ size = 24, color = "black", className }: Props) => (
+  <Ionicons name="cash-sharp" size={size} color={color} className={className} />
+);
+
 export const IconGoBack = ({ size = 24, color = "black", className }: Props) => (
   <Ionicons name="arrow-back-circle" size={size} color={color} className={className} />
+);
+
+export const IconCompass = ({ size = 24, color = "black", className }: Props) => (
+  <Ionicons name="compass-sharp" size={size} color={color} className={className} />
 );
 
 export const IconCar = ({ size = 24, color = "black", className }: Props) => (
@@ -90,6 +106,10 @@ export const IconPlus = ({ size = 24, color = "black", className }: Props) => (
 
 export const IconMinus = ({ size = 24, color = "black", className }: Props) => (
   <AntDesign name="minuscircle" size={size} color={color} className={className} />
+);
+
+export const IconSelect = ({ size = 24, color = "black", className }: Props) => (
+  <AntDesign name="checkcircle" size={size} color={color} className={className} />
 );
 
 export const IconLike = ({ size = 24, color = "black", className }: Props) => (

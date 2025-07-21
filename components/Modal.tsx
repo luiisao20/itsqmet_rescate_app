@@ -3,10 +3,12 @@ import { View, Modal, ModalProps, Text, Pressable } from "react-native";
 import { IconClose, IconLike } from "./ui/Icons";
 import { TextInput } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
+import { Time } from "@/app/(slot)/(cart)/pay";
+import { Selection } from "./Selection";
 
 interface InputProps extends ModalProps {
   isOpen: boolean;
-  label: string;
+  label?: string;
   inputMode?: "decimal" | "email" | "numeric" | "text";
   textValue?: string;
   infoCard?: {
@@ -14,11 +16,16 @@ interface InputProps extends ModalProps {
     date: string;
     cvv: string;
   };
+  infoLocation?: {
+    alias: string;
+    description: string;
+  };
 
   onClose: () => void;
   onSendData?: (text: string) => void;
   onDeleteData?: (id: string) => void;
   onUpdateData?: (id: string) => void;
+  onUpdateLocation?: () => void;
 }
 
 export const ModalInput = ({
@@ -216,7 +223,8 @@ interface InfoProps extends ModalProps {
   cart?: boolean;
 
   onClose: () => void;
-  onUnDone: () => void;
+  onUnDone?: () => void;
+  onSelect?: (id: string) => void;
 }
 
 export const ModalInfo = ({
@@ -225,7 +233,7 @@ export const ModalInfo = ({
   cart = false,
 
   onClose,
-  onUnDone,
+  onUnDone = () => console.log("No implementado"),
   ...rest
 }: InfoProps) => {
   return (
@@ -271,6 +279,164 @@ export const ModalInfo = ({
                 Deshacer
               </Text>
             )}
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+export const ModalLocation = ({
+  isOpen,
+  infoLocation = {
+    alias: "",
+    description: "",
+  },
+
+  onClose,
+  onUpdateLocation = () => console.log("no implementado"),
+  ...rest
+}: InputProps) => {
+  const [location, setLocation] = useState<{
+    alias: string;
+    description: string;
+  }>({ alias: "", description: "" });
+
+  useEffect(() => {
+    location.alias = infoLocation.alias;
+    location.description = infoLocation.description;
+  }, [infoLocation]);
+
+  return (
+    <Modal
+      visible={isOpen}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      {...rest}
+    >
+      <View className="flex-1 justify-center items-center bg-black/50">
+        <View className="bg-white w-[95%] rounded-xl py-8 px-10 justify-center items-center relative">
+          <Pressable
+            onPress={() => onClose()}
+            className="absolute top-4 right-4 active:bg-button/60 rounded-xl"
+          >
+            <IconClose className="text-color" />
+          </Pressable>
+          <Text className="text-xl font-normal text-center">
+            Actualiza la información de la ubicación
+          </Text>
+          <View className="w-full">
+            <TextInput
+              className="bg-white"
+              label="Alias"
+              autoCapitalize="words"
+              mode="flat"
+              inputMode="text"
+              textColor={Colors.color}
+              underlineColor={Colors.color}
+              activeUnderlineColor={Colors.button}
+              value={infoLocation.alias}
+              onChangeText={(text) =>
+                setLocation((prev) => ({
+                  ...prev,
+                  alias: text,
+                }))
+              }
+            />
+            <TextInput
+              className="bg-white"
+              label="Dirección"
+              autoCapitalize="words"
+              mode="flat"
+              inputMode="text"
+              textColor={Colors.color}
+              underlineColor={Colors.color}
+              activeUnderlineColor={Colors.button}
+              value={infoLocation.description}
+              onChangeText={(text) =>
+                setLocation((prev) => ({
+                  ...prev,
+                  description: text,
+                }))
+              }
+            />
+          </View>
+          <View className="flex flex-row justify-start gap-4">
+            <Pressable
+              className="bg-button rounded-lg px-4 mt-4 active:bg-button/60"
+              onPress={() => onUpdateLocation()}
+            >
+              <Text className="text-white py-3 text-center text-base font-bold">
+                Actualizar
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+export const ModalPayments = ({
+  isOpen,
+  message,
+
+  onClose,
+  onSelect = () => console.log("No implementado"),
+  ...rest
+}: InfoProps) => {
+  const [selected, setSelected] = useState<string>("");
+
+  const options: Time[] = [
+    {
+      id: "4",
+      label: "Visa",
+      description: "Luis Bravo",
+    },
+    {
+      id: "5",
+      label: "Efectivo",
+      description: "",
+    },
+  ];
+
+  return (
+    <Modal
+      visible={isOpen}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      {...rest}
+    >
+      <View className="flex-1 justify-center items-center bg-black/50">
+        <View className="bg-white w-[95%] rounded-xl py-8 px-10 justify-center items-center relative">
+          <Pressable
+            onPress={() => onClose()}
+            className="absolute top-4 right-4 active:bg-button/60 rounded-xl"
+          >
+            <IconClose className="text-color" />
+          </Pressable>
+          <Text className="text-xl text-color text-center font-semibold">
+            Escoge un método de pago
+          </Text>
+          <View className="flex gap-4 w-full my-4">
+            {options.map((item, index) => (
+              <Selection
+                key={index}
+                id={item.id}
+                label={item.label}
+                description={item.description}
+                selected={selected}
+                setSelected={() => setSelected(item.id)}
+              />
+            ))}
+          </View>
+          <Pressable
+            onPress={() => onSelect(selected)}
+            className="bg-success p-4 rounded-xl"
+          >
+            <Text className="text-white text-xl shadow-black">Seleccionar</Text>
           </Pressable>
         </View>
       </View>

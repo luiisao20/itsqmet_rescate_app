@@ -1,45 +1,42 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, ScrollView } from "react-native";
 import { useState } from "react";
-import {
-  IconCard,
-  IconFast,
-  IconGo,
-  IconStandard,
-  IconWait,
-} from "@/components/ui/Icons";
+import { IconCard, IconCash, IconGo } from "@/components/ui/Icons";
 import { Colors } from "@/constants/Colors";
+import { ModalPayments } from "@/components/Modal";
+import { Selection } from "@/components/Selection";
+import { router } from "expo-router";
 
-type Time = {
-  id: number;
+export type Time = {
+  id: string;
   label: string;
   description: string;
-  time: string;
-  price: number;
+  time?: string;
+  price?: number;
 };
 
 const PayScreen = () => {
   const address =
     "Lorem ipsum dolor sit amet consectetur adipisicing elit. Delectus soluta debitis ipsa est, assumenda necessitatibus voluptas deserunt voluptatum quas? Nihil sequi ut fuga error earum optio commodi pariatur tenetur labore.";
-  const [selected, setSelected] = useState<number>(2);
+  const [selected, setSelected] = useState<string>("2");
 
   const numberCard: string = "3234345698987654";
   const options: Time[] = [
     {
-      id: 1,
+      id: "1",
       label: "Más rápido",
       description: "Entrega directa a ti",
       time: "20 - 45 min",
       price: 0.79,
     },
     {
-      id: 2,
+      id: "2",
       label: "Estándard",
       description: "Entrega regular",
       time: "30 - 50 min",
       price: 0,
     },
     {
-      id: 3,
+      id: "3",
       label: "Ahorra sin apurarte",
       description: "Espera y ahorra",
       time: "45 - 65 min",
@@ -47,81 +44,124 @@ const PayScreen = () => {
     },
   ];
 
-  const renderIcon = (price: number) => {
-    if (price > 0) return <IconFast size={16} color={Colors.color} />;
-    else if (price === 0)
-      return <IconStandard size={16} color={Colors.color} />;
-    else return <IconWait size={16} color={Colors.color} />;
-  };
+  const [paymentMethod, setPaymentMethod] = useState<string>("4");
 
-  return (
-    <View className="py-4 gap-4 px-6">
-      <Text className="text-xl text-color font-semibold">
-        Dirección de entrega
-      </Text>
-      <Pressable className="flex p-2 flex-row justify-between items-center border-b-2 border-color active:bg-gray-200">
-        <View className="w-4/5">
-          <Text
-            numberOfLines={2}
-            ellipsizeMode="tail"
-            className="text-lg font-light"
-          >
-            {address}
-          </Text>
-        </View>
-        <IconGo color={Colors.color} />
-      </Pressable>
-      <Text className="text-xl text-color font-semibold">
-        Tiempo de entrega
-      </Text>
-      <View className="flex gap-4">
-        {options.map((opt) => (
-          <Pressable
-            key={opt.id}
-            onPress={() => setSelected(opt.id)}
-            className={`rounded-xl border-2 px-4 py-3 ${
-              selected === opt.id
-                ? "border-button bg-button/30"
-                : "border-gray-300"
-            }`}
-          >
-            <View className="flex flex-row items-center justify-between">
-              <View>
-                <View className="flex flex-row gap-4">
-                  {renderIcon(opt.price)}
-                  <Text className="text-base text-color">{opt.label}</Text>
-                </View>
-                <Text className="font-light text-sm text-gray-600">
-                  {opt.description}
-                </Text>
-              </View>
-              <Text
-                className={`font-normal text-lg text-gray-600 ${
-                  opt.price < 0 && "text-blue-600"
-                }`}
-              >
-                ${opt.price}
-              </Text>
-            </View>
-          </Pressable>
-        ))}
-      </View>
-      <View className="flex flex-row items-center justify-between">
-        <Text className="text-xl text-color font-semibold">Método de pago</Text>
-        <Pressable className="bg-button py-2 px-4 rounded-xl active:bg-button/60">
-          <Text className="text-white text-xl text-center">Cambiar</Text>
-        </Pressable>
-      </View>
-      <View className="flex p-2 flex-row justify-between items-center border-b-2 border-color">
+  const [modalProps, setModalProps] = useState<{
+    message: string;
+    isOpen: boolean;
+    index: number;
+  }>({
+    message: "",
+    isOpen: false,
+    index: 0,
+  });
+
+  const renderPaymentMethod = (id: string) => {
+    if (id === "4") {
+      return (
         <View className="flex flex-row items-center gap-4">
           <IconCard color={Colors.color} />
           <View>
-            <Text className="text-lg font-light">Crédito *{numberCard.slice(-4)}</Text>
+            <Text className="text-lg font-light">
+              Crédito *{numberCard.slice(-4)}
+            </Text>
             <Text>Luis Bravo</Text>
           </View>
         </View>
+      );
+    } else {
+      return (
+        <View className="flex flex-row items-center gap-4">
+          <IconCash color={Colors.color} />
+          <View>
+            <Text className="text-lg font-light">Efectivo</Text>
+          </View>
+        </View>
+      );
+    }
+  };
+
+  return (
+    <ScrollView>
+      <View className="py-4 gap-4 px-6">
+        <Text className="text-xl text-color font-semibold">
+          Dirección de entrega
+        </Text>
+        <Pressable
+          onPress={() => router.push("/(slot)/(cart)/address")}
+          className="flex p-2 flex-row justify-between items-center border-b-2 border-color active:bg-gray-200"
+        >
+          <View className="w-4/5">
+            <Text
+              numberOfLines={2}
+              ellipsizeMode="tail"
+              className="text-lg font-light"
+            >
+              {address}
+            </Text>
+          </View>
+          <IconGo color={Colors.color} />
+        </Pressable>
+        <Text className="text-xl text-color font-semibold">
+          Tiempo de entrega
+        </Text>
+        <View className="flex gap-4">
+          {options.map((opt, index) => (
+            <Selection
+              key={index}
+              id={opt.id}
+              price={opt.price}
+              label={opt.label}
+              time={opt.time}
+              description={opt.description}
+              selected={selected}
+              setSelected={() => setSelected(opt.id)}
+            />
+          ))}
+        </View>
+        <View className="flex flex-row items-center justify-between">
+          <Text className="text-xl text-color font-semibold">
+            Método de pago
+          </Text>
+          <Pressable
+            onPress={() => setModalProps((prev) => ({ ...prev, isOpen: true }))}
+            className="bg-button py-2 px-4 rounded-xl active:bg-button/60"
+          >
+            <Text className="text-white text-xl text-center">Cambiar</Text>
+          </Pressable>
+        </View>
+        <View className="flex p-2 flex-row justify-between items-center border-b-2 border-color">
+          {renderPaymentMethod(paymentMethod)}
+        </View>
+        <View className="bg-background p-4 rounded-xl flex gap-4">
+          <View className="flex flex-row justify-between">
+            <Text className="font-light text-lg text-color">Productos</Text>
+            <Text className="font-light text-lg text-color">$5.50</Text>
+          </View>
+          <View className="flex flex-row justify-between">
+            <Text className="font-light text-lg text-color">
+              Cobro por entrega
+            </Text>
+            <Text className="font-light text-lg text-color">$0.59</Text>
+          </View>
+          <View className="flex flex-row justify-between">
+            <Text className="font-light text-lg text-color">
+              Cobro por servicio
+            </Text>
+            <Text className="font-light text-lg text-color">$0.39</Text>
+          </View>
+        </View>
       </View>
-    </View>
+      <ModalPayments
+        isOpen={modalProps.isOpen}
+        message={modalProps.message}
+        onClose={() => setModalProps((prev) => ({ ...prev, isOpen: false }))}
+        onSelect={(id) => {
+          setPaymentMethod(id);
+          setModalProps((prev) => ({ ...prev, isOpen: false }));
+        }}
+      />
+    </ScrollView>
   );
 };
 
