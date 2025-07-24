@@ -30,7 +30,6 @@ const RegisterScreen = () => {
   });
 
   return (
-    <KeyboardAvoidingView behavior="position">
       <SafeAreaView>
         <View className="bg-background w-[95%] p-4 rounded-xl mx-auto">
           <Image
@@ -169,7 +168,6 @@ const RegisterScreen = () => {
           </Pressable>
         </View>
       </SafeAreaView>
-    </KeyboardAvoidingView>
   );
 };
 

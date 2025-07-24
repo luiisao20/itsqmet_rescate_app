@@ -15,7 +15,6 @@ const AdressScreen = () => {
       </Text>
       {locations.map((item, index) => (
         <View
-          // onPress={() => router.push(`/(slot)/(cart)/position/${item.alias}`)}
           key={index}
           className="bg-background my-4 flex flex-row items-center justify-between p-4 rounded-xl"
         >
@@ -43,7 +42,10 @@ const AdressScreen = () => {
           </View>
         </View>
       ))}
-      <Pressable onPress={() => router.push('/(slot)/(cart)/position/new')} className="bg-button p-4 rounded-xl">
+      <Pressable
+        onPress={() => router.push("/(slot)/(cart)/position/new")}
+        className="bg-button p-4 rounded-xl"
+      >
         <Text className="text-white font-semibold text-lg text-center">
           Añadir nueva ubicación
         </Text>

@@ -110,7 +110,7 @@ const EditAdress = () => {
     followCurrentLocation(lastKnwonLocation);
   };
 
-  if (lastKnwonLocation === null) {
+  if (lastKnwonLocation === null && isNew) {
     return (
       <View className="flex-1 justify-center items-center">
         <ActivityIndicator />

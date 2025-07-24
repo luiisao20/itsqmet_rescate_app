@@ -25,11 +25,15 @@ export const IconMap = ({ size = 24, color = "black", className }: Props) => (
 );
 
 export const IconTrash = ({ size = 24, color = "black", className }: Props) => (
-  <MaterialCommunityIcons name="trash-can" size={size} color={color} className={className} />
+  <MaterialCommunityIcons name="trash-can-outline" size={size} color={color} className={className} />
 );
 
 export const IconGive = ({ size = 24, color = "black", className }: Props) => (
   <FontAwesome5 name="hand-holding-heart" size={size} color={color} className={className} />
+);
+
+export const IconHands = ({ size = 24, color = "black", className }: Props) => (
+  <FontAwesome5 name="handshake" size={size} color={color} className={className} />
 );
 
 export const IconMapPin = ({ size = 24, color = "black", className }: Props) => (
@@ -64,8 +68,16 @@ export const IconGo = ({ size = 24, color = "black", className }: Props) => (
   <MaterialIcons name="arrow-forward-ios" size={size} color={color} className={className} />
 );
 
+export const IconAdd = ({ size = 24, color = "black", className }: Props) => (
+  <MaterialIcons name="add-shopping-cart" size={size} color={color} className={className} />
+);
+
 export const IconWait = ({ size = 24, color = "black", className }: Props) => (
   <MaterialIcons name="chair" size={size} color={color} className={className} />
+);
+
+export const IconHouse = ({ size = 24, color = "black", className }: Props) => (
+  <MaterialIcons name="food-bank" size={size} color={color} className={className} />
 );
 
 export const IconStore = ({ size = 24, color = "black", className }: Props) => (
@@ -74,6 +86,10 @@ export const IconStore = ({ size = 24, color = "black", className }: Props) => (
 
 export const IconProfileHome = ({ size = 24, color = "black", className }: Props) => (
   <Ionicons name="person-circle-sharp" size={size} color={color} className={className} />
+);
+
+export const IconFastFood = ({ size = 24, color = "black", className }: Props) => (
+  <Ionicons name="fast-food" size={size} color={color} className={className} />
 );
 
 export const IconClose = ({ size = 24, color = "black", className }: Props) => (
@@ -101,15 +117,27 @@ export const IconSecurity = ({ size = 24, color = "black", className }: Props) =
 );
 
 export const IconPlus = ({ size = 24, color = "black", className }: Props) => (
-  <AntDesign name="pluscircle" size={size} color={color} className={className} />
+  <AntDesign name="plus" size={size} color={color} className={className} />
 );
 
 export const IconMinus = ({ size = 24, color = "black", className }: Props) => (
-  <AntDesign name="minuscircle" size={size} color={color} className={className} />
+  <AntDesign name="minus" size={size} color={color} className={className} />
 );
 
 export const IconSelect = ({ size = 24, color = "black", className }: Props) => (
   <AntDesign name="checkcircle" size={size} color={color} className={className} />
+);
+
+export const IconStar = ({ size = 24, color = "black", className }: Props) => (
+  <AntDesign name="star" size={size} color={color} className={className} />
+);
+
+export const IconHeartFilled = ({ size = 24, color = "black", className }: Props) => (
+  <AntDesign name="heart" size={size} color={color} className={className} />
+);
+
+export const IconHeartOut = ({ size = 24, color = "black", className }: Props) => (
+  <AntDesign name="hearto" size={size} color={color} className={className} />
 );
 
 export const IconLike = ({ size = 24, color = "black", className }: Props) => (

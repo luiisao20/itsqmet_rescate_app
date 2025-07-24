@@ -1,6 +1,6 @@
 import { router, Tabs } from "expo-router";
 import React from "react";
-import { Platform, Pressable, Text } from "react-native";
+import { Platform, Pressable, SafeAreaView, Text } from "react-native";
 
 import {
   IconCar,

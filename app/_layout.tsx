@@ -3,11 +3,18 @@ import { Slot } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { PaperProvider } from "react-native-paper";
 import "react-native-reanimated";
+import * as NavigationBar from "expo-navigation-bar";
+import { useEffect } from "react";
 
 import "../global.css";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function RootLayout() {
+  useEffect(() => {
+    NavigationBar.setBackgroundColorAsync("#ffffff");
+    NavigationBar.setButtonStyleAsync("dark");
+  }, []);
+
   const [loaded] = useFonts({
     "Inter_pt-Bold": require("@/assets/fonts/Inter_pt-Bold.ttf"),
     "Inter_pt-ExtraBold": require("@/assets/fonts/Inter_pt-ExtraBold.ttf"),
