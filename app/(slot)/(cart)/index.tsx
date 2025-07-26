@@ -1,96 +1,64 @@
 import { Pressable, Text, View } from "react-native";
 import { useState } from "react";
 import PackCard from "@/components/PackCard";
-import { ModalInfo } from "@/components/Modal";
-
-type Pack = {
-  title: string;
-  price: number;
-  discountPrice?: number;
-  quantity: number;
-};
+import { Pack } from "@/infraestructure/interfaces/PackInterface";
+import { FlatList } from "react-native-gesture-handler";
 
 const IndexCar = () => {
-  const [modalProps, setModalProps] = useState<{
-    message: string;
-    isOpen: boolean;
-    index: number;
-  }>({
-    message: "",
-    isOpen: false,
-    index: 0,
-  });
-
   const [packs, setPacks] = useState<Pack[]>([
     {
-      title: "Pack de KFC",
+      title: "Kentucky Fried Chicken",
       price: 8.99,
-      quantity: 2,
+      distance: 1,
+      rate: 4.8,
+      pickUp: "12:00PM - 1:00PM",
+      packsLeft: 3,
+      logo: require("@/assets/images/packs/logo-kfc.png"),
+      background: require("@/assets/images/packs/background-kfc.png"),
+      quantity: 3,
     },
     {
-      title: "Pack de Menestras del negro",
-      price: 10.99,
-      discountPrice: 7.99,
+      title: "La Casa de la Humita",
+      price: 3.5,
+      distance: 0.8,
+      rate: 4.6,
+      pickUp: "10:30AM - 11:30AM",
+      packsLeft: 5,
+      logo: require("@/assets/images/packs/logo-humitas.png"),
+      background: require("@/assets/images/packs/background-humitas.png"),
       quantity: 1,
     },
   ]);
 
-  const increment = (index: number) => {
-    setPacks((prevPacks) =>
-      prevPacks.map((pack, i) =>
-        i === index ? { ...pack, quantity: pack.quantity + 1 } : pack
-      )
-    );
-  };
-
-  const decrement = (index: number) => {
-    setPacks((prevPacks) =>
-      prevPacks.map((pack, i) =>
-        i === index ? { ...pack, quantity: pack.quantity - 1 } : pack
-      )
-    );
-  };
-
-  const removePack = () => {
-    setPacks((prevPacks) => prevPacks.filter((_, i) => i !== modalProps.index));
-    modalProps.isOpen = false;
-  };
-
   return (
-    <View className="px-6 flex gap-4">
-      {packs.map((item, index) => (
-        <PackCard
-          key={index}
-          home={false}
-          title={item.title}
-          price={item.price}
-          quantityValue={item.quantity}
-          discountPrice={item.discountPrice}
-          onIncrement={() => increment(index)}
-          onDecrement={() => decrement(index)}
-          onOpenModal={() =>
-            setModalProps((prev) => ({
-              ...prev,
-              isOpen: true,
-              message: item.title,
-              index: index,
-            }))
-          }
-        />
-      ))}
-      <Pressable className="bg-danger active:bg-danger/60 py-4 rounded-xl">
-        <Text className="text-white text-center font-semibold text-xl">
-          Vaciar carrito
-        </Text>
-      </Pressable>
-      <ModalInfo
-        cart={true}
-        message={modalProps.message}
-        onClose={() => setModalProps((prev) => ({ ...prev, isOpen: false }))}
-        onUnDone={() => removePack()}
-        isOpen={modalProps.isOpen}
-      />
-    </View>
+    <FlatList
+      data={packs}
+      renderItem={({ item, index }) => (
+        <View className="px-6 my-4">
+          <PackCard key={index} home={false} info={item} />
+        </View>
+      )}
+      ListFooterComponent={
+        <View className="px-6 mb-20">
+          <Pressable className="bg-danger active:bg-danger/60 py-4 rounded-xl">
+            <Text className="text-white text-center font-semibold text-xl">
+              Vaciar carrito
+            </Text>
+          </Pressable>
+        </View>
+      }
+      removeClippedSubviews={true}
+      maxToRenderPerBatch={5}
+      updateCellsBatchingPeriod={100}
+      initialNumToRender={5}
+      windowSize={10}
+      getItemLayout={(_, index) => ({
+        length: 300,
+        offset: 300 * index,
+        index,
+      })}
+      showsVerticalScrollIndicator={false}
+    />
   );
 };
 

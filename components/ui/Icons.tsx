@@ -48,6 +48,10 @@ export const IconProfile = ({ size = 24, color = "black", className }: Props) =>
   <Ionicons name="person" size={size} color={color} className={className} />
 );
 
+export const IconBag = ({ size = 24, color = "black", className }: Props) => (
+  <Ionicons name="bag-outline" size={size} color={color} className={className} />
+);
+
 export const IconCash = ({ size = 24, color = "black", className }: Props) => (
   <Ionicons name="cash-sharp" size={size} color={color} className={className} />
 );
@@ -119,6 +123,11 @@ export const IconSecurity = ({ size = 24, color = "black", className }: Props) =
 export const IconPlus = ({ size = 24, color = "black", className }: Props) => (
   <AntDesign name="plus" size={size} color={color} className={className} />
 );
+
+export const IconGoBackLine = ({ size = 24, color = "black", className }: Props) => (
+  <AntDesign name="arrowleft" size={size} color={color} className={className} />
+);
+
 
 export const IconMinus = ({ size = 24, color = "black", className }: Props) => (
   <AntDesign name="minus" size={size} color={color} className={className} />

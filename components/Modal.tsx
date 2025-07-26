@@ -1,25 +1,29 @@
 import { useEffect, useState } from "react";
 import { View, Modal, ModalProps, Text, Pressable } from "react-native";
 import { IconClose, IconLike } from "./ui/Icons";
-import { TextInput } from "react-native-paper";
+import { Portal, TextInput } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
 import { Time } from "@/app/(slot)/(cart)/pay";
 import { Selection } from "./Selection";
+
+export interface Card {
+  number: string;
+  date: string;
+  cvv: string;
+  type: string;
+}
 
 interface InputProps extends ModalProps {
   isOpen: boolean;
   label?: string;
   inputMode?: "decimal" | "email" | "numeric" | "text";
   textValue?: string;
-  infoCard?: {
-    number: string;
-    date: string;
-    cvv: string;
-  };
+  infoCard?: Card;
   infoLocation?: {
     alias: string;
     description: string;
   };
+  showDelete?: boolean;
 
   onClose: () => void;
   onSendData?: (text: string) => void;
@@ -93,30 +97,37 @@ export const ModalInput = ({
 
 export const ModalCard = ({
   isOpen,
-  label,
-  inputMode = "text",
-  infoCard = {
-    number: "",
-    cvv: "",
-    date: "",
-  },
+  inputMode = "numeric",
+  showDelete = true,
 
   onClose,
   onUpdateData = () => console.log("no implementado"),
   onDeleteData = () => console.log("no implementado"),
   ...rest
 }: InputProps) => {
-  const [card, setCard] = useState<{
-    code: string;
-    date: string;
-    cvv: string;
-  }>({ code: "", date: "", cvv: "" });
+  const [card, setCard] = useState<Card>({
+    number: "",
+    date: "",
+    cvv: "",
+    type: "",
+  });
 
-  useEffect(() => {
-    card.code = infoCard.number;
-    card.cvv = infoCard.cvv;
-    card.date = infoCard.date;
-  }, [infoCard]);
+  const handleChange = (text: string) => {
+    const cleaned = text.replace(/[^0-9]/g, "");
+    let formatted = cleaned;
+    if (cleaned.length >= 3) {
+      formatted = `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}`;
+    }
+    setCard((prev) => ({ ...prev, date: formatted }));
+  };
+
+  const getCardBrand = (number: string): string => {
+    if (number.startsWith("4")) return "Visa";
+    if (/^5[1-5]/.test(number)) return "MasterCard";
+    if (/^3[47]/.test(number)) return "American Express";
+    if (/^6(?:011|5)/.test(number)) return "Discover";
+    return "Otra";
+  };
 
   return (
     <Modal
@@ -135,7 +146,9 @@ export const ModalCard = ({
             <IconClose className="text-color" />
           </Pressable>
           <Text className="text-xl font-normal text-center">
-            Actualiza la información de tu tarjeta
+            {showDelete
+              ? "Actualiza la información de tu tarjeta"
+              : "Rellena los datos"}
           </Text>
           <View className="w-full">
             <TextInput
@@ -147,13 +160,14 @@ export const ModalCard = ({
               textColor={Colors.color}
               underlineColor={Colors.color}
               activeUnderlineColor={Colors.button}
-              value={infoCard.number}
-              onChangeText={(text) =>
+              value={card.number}
+              onChangeText={(text) => {
+                console.log(getCardBrand(text));
                 setCard((prev) => ({
                   ...prev,
                   number: text,
-                }))
-              }
+                }));
+              }}
             />
             <View className="flex flex-row justify-center gap-4">
               <TextInput
@@ -165,13 +179,8 @@ export const ModalCard = ({
                 textColor={Colors.color}
                 underlineColor={Colors.color}
                 activeUnderlineColor={Colors.button}
-                value={infoCard.date}
-                onChangeText={(text) =>
-                  setCard((prev) => ({
-                    ...prev,
-                    date: text,
-                  }))
-                }
+                value={card.date}
+                onChangeText={handleChange}
               />
               <TextInput
                 className="bg-white w-[120]"
@@ -179,11 +188,11 @@ export const ModalCard = ({
                 secureTextEntry
                 autoCapitalize="words"
                 mode="flat"
-                inputMode={inputMode}
+                inputMode="numeric"
                 textColor={Colors.color}
                 underlineColor={Colors.color}
                 activeUnderlineColor={Colors.button}
-                value=""
+                value={card.cvv}
                 onChangeText={(text) =>
                   setCard((prev) => ({
                     ...prev,
@@ -194,14 +203,16 @@ export const ModalCard = ({
             </View>
           </View>
           <View className="flex flex-row justify-start gap-4">
-            <Pressable
-              className="bg-danger rounded-lg px-4 mt-4 active:bg-danger/60"
-              onPress={() => onDeleteData("1")}
-            >
-              <Text className="text-white py-3 text-center text-base font-bold">
-                Eliminar
-              </Text>
-            </Pressable>
+            {showDelete && (
+              <Pressable
+                className="bg-danger rounded-lg px-4 mt-4 active:bg-danger/60"
+                onPress={() => onDeleteData("1")}
+              >
+                <Text className="text-white py-3 text-center text-base font-bold">
+                  Eliminar
+                </Text>
+              </Pressable>
+            )}
             <Pressable
               className="bg-button rounded-lg px-4 mt-4 active:bg-button/60"
               onPress={() => onUpdateData("1")}
@@ -217,8 +228,9 @@ export const ModalCard = ({
   );
 };
 
-interface InfoProps extends ModalProps {
+export interface InfoProps extends ModalProps {
   isOpen: boolean;
+  product?: string;
   message: string;
   cart?: boolean;
 
@@ -230,6 +242,7 @@ interface InfoProps extends ModalProps {
 export const ModalInfo = ({
   isOpen,
   message,
+  product,
   cart = false,
 
   onClose,
@@ -237,52 +250,43 @@ export const ModalInfo = ({
   ...rest
 }: InfoProps) => {
   return (
-    <Modal
-      visible={isOpen}
-      transparent
-      animationType="fade"
-      statusBarTranslucent
-      {...rest}
-    >
-      <View className="flex-1 justify-center items-center bg-black/50">
-        <View className="bg-white w-[95%] rounded-xl py-8 px-10 justify-center items-center relative">
-          <Pressable
-            onPress={() => onClose()}
-            className="absolute top-4 right-4 active:bg-button/60 rounded-xl"
-          >
-            <IconClose className="text-color" />
-          </Pressable>
-          {cart ? (
+    <Portal>
+      <Modal
+        visible={isOpen}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        {...rest}
+      >
+        <View className="flex-1 justify-center items-center bg-black/50">
+          <View className="bg-white w-[95%] rounded-xl py-8 px-10 justify-center items-center relative">
+            <Pressable
+              onPress={() => onClose()}
+              className="absolute top-4 right-4 active:bg-button/60 rounded-xl"
+            >
+              <IconClose className="text-color" />
+            </Pressable>
             <Text className="text-xl text-color text-center">
               El paquete
-              <Text className="font-bold"> {message} </Text>
-              será eliminado del carrito
+              <Text className="font-bold"> {product} </Text>
+              {/* {cart
+                ? "será eliminado del carrito"
+                : "ha sido reservado en el carrito"} */}
+              {message}
             </Text>
-          ) : (
-            <Text className="text-xl text-color text-center">
-              El paquete
-              <Text className="font-bold"> {message} </Text>
-              ha sido reservado en el carrito
-            </Text>
-          )}
-          <IconLike color={Colors.color} size={50} className="my-4" />
-          <Pressable
-            onPress={() => onUnDone()}
-            className="bg-danger active:bg-danger/60 w-1/2 py-3 rounded-xl"
-          >
-            {cart ? (
+            <IconLike color={Colors.color} size={50} className="my-4" />
+            <Pressable
+              onPress={() => onUnDone()}
+              className="bg-danger active:bg-danger/60 w-1/2 py-3 rounded-xl"
+            >
               <Text className="text-white font-semibold text-xl text-center">
-                Eliminar
+                {cart ? "Eliminar" : "Deshacer"}
               </Text>
-            ) : (
-              <Text className="text-white font-semibold text-xl text-center">
-                Deshacer
-              </Text>
-            )}
-          </Pressable>
+            </Pressable>
+          </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+    </Portal>
   );
 };
 

@@ -1,21 +1,12 @@
-import { Pressable, ScrollView, Text, View } from "react-native";
-import { Image } from "expo-image";
-import { IconGo } from "@/components/ui/Icons";
 import HomeCards from "@/components/HomeCards";
 import PackCard from "@/components/PackCard";
-import { router } from "expo-router";
-import { ModalInfo } from "@/components/Modal";
-import { useState } from "react";
-import { Pack } from "@/infraestructure/interfaces/Packs";
+import { IconGo } from "@/components/ui/Icons";
+import { Pack } from "@/infraestructure/interfaces/PackInterface";
+import { Image } from "expo-image";
+import { useCallback } from "react";
+import { FlatList, ListRenderItem, Pressable, Text, View } from "react-native";
 
 export default function HomeTab() {
-  const [modalProps, setModalProps] = useState<{
-    message: string;
-    isOpen: boolean;
-  }>({
-    message: "",
-    isOpen: false,
-  });
 
   const packs: Pack[] = [
     {
@@ -80,8 +71,27 @@ export default function HomeTab() {
     },
   ];
 
-  return (
-    <ScrollView>
+  // useEffect(() => {
+  //   const imagesToPreload: string[] = [];
+
+  //   packs.forEach((pack) => {
+  //     // Solo agregar si es un objeto con uri (imágenes remotas)
+  //     if (typeof pack.background === "object" && "uri" in pack.background) {
+  //       imagesToPreload.push(pack.background.uri);
+  //     }
+  //     if (typeof pack.logo === "object" && "uri" in pack.logo) {
+  //       imagesToPreload.push(pack.logo.uri);
+  //     }
+  //   });
+
+  //   // Preload solo imágenes remotas (con URI)
+  //   imagesToPreload.forEach((imageUri) => {
+  //     Image.prefetch(imageUri);
+  //   });
+  // }, [packs]);
+
+  const HeaderComponent = () => (
+    <>
       <Image
         style={{
           resizeMode: "contain",
@@ -91,6 +101,9 @@ export default function HomeTab() {
           borderBottomRightRadius: 20,
         }}
         source={require("@/assets/images/portada.jpg")}
+        contentFit="cover"
+        priority="high"
+        cachePolicy="memory-disk"
       />
       <View className="px-6 my-4">
         <Text className="text-5xl font-extrabold text-color">Rescate App</Text>
@@ -104,29 +117,43 @@ export default function HomeTab() {
           <HomeCards icon="gift" title="Donaciones" />
           <HomeCards icon="store" title="Restaurantes aliados" />
         </View>
-        <View className="my-4 flex gap-4">
-          <Text className="text-xl font-medium text-color">Packs del día</Text>
-          {packs.map((item, index) => (
-            <PackCard
-              key={index}
-              info={item}
-              onBook={() =>
-                setModalProps((prev) => ({
-                  ...prev,
-                  isOpen: true,
-                  message: item.title,
-                }))
-              }
-            />
-          ))}
-        </View>
+        <Text className="text-xl font-medium text-color mt-4">
+          Packs del día
+        </Text>
       </View>
-      <ModalInfo
-        message={modalProps.message}
-        onClose={() => setModalProps((prev) => ({ ...prev, isOpen: false }))}
-        onUnDone={() => console.log("Por implementar deshacer")}
-        isOpen={modalProps.isOpen}
+    </>
+  );
+
+  const renderItem: ListRenderItem<Pack> = useCallback(
+    ({ item }) => (
+      <View className="px-6 mb-4">
+        <PackCard
+          info={item}
+        />
+      </View>
+    ),
+    []
+  );
+
+  return (
+    <>
+      <FlatList
+        data={packs}
+        keyExtractor={(_, index) => index.toString()}
+        ListHeaderComponent={<HeaderComponent />}
+        renderItem={renderItem}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={5}
+        updateCellsBatchingPeriod={100}
+        initialNumToRender={5}
+        windowSize={10}
+        getItemLayout={(_, index) => ({
+          length: 300,
+          offset: 300 * index,
+          index,
+        })}
+        showsVerticalScrollIndicator={false}
       />
-    </ScrollView>
+    </>
   );
 }

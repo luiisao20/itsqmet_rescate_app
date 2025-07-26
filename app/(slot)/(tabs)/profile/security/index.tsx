@@ -5,6 +5,13 @@ import { Colors } from "@/constants/Colors";
 import { IconGo } from "@/components/ui/Icons";
 import { ModalCard } from "@/components/Modal";
 
+interface Card {
+  number: string;
+  type: string;
+  month: number;
+  year: number
+}
+
 const SecurityProfile = () => {
   const [password, setPassword] = useState<{
     oldPassword: string;
@@ -13,17 +20,20 @@ const SecurityProfile = () => {
     oldPassword: "",
     newPassword: "",
   });
-  const info = {
-    number: "3234345698987654",
-    cvv: "704",
-    date: "12/29",
+  const info:Card = {
+    number: "7654",
+    month: 12,
+    year: 29,
+    type: 'Visa'
   };
   const [modalProps, setModalProps] = useState<{
     label: string;
     isOpen: boolean;
+    showDelete?: boolean;
   }>({
     label: "",
     isOpen: false,
+    showDelete: true,
   });
 
   return (
@@ -87,11 +97,24 @@ const SecurityProfile = () => {
           </View>
           <IconGo size={20} />
         </Pressable>
+        <Pressable
+          onPress={() =>
+            setModalProps((prev) => ({
+              ...prev,
+              isOpen: true,
+              showDelete: false,
+            }))
+          }
+          className="bg-button active:bg-button/60 p-4 rounded-xl mx-10"
+        >
+          <Text className="text-xl text-white font-semibold text-center">
+            Añadir tarjeta
+          </Text>
+        </Pressable>
       </View>
       <ModalCard
-        label={"tarjeta"}
         isOpen={modalProps.isOpen}
-        infoCard={info}
+        showDelete={modalProps.showDelete}
         onClose={() => setModalProps((prev) => ({ ...prev, isOpen: false }))}
         onSendData={(text) => console.log(text)}
       />
