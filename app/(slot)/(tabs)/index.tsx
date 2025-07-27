@@ -1,10 +1,12 @@
+import { useCallback } from "react";
+import { FlatList, ListRenderItem, Pressable, Text, View } from "react-native";
+import { Image } from "expo-image";
+
+import { Pack } from "@/infraestructure/interfaces/PackInterface";
+
 import HomeCards from "@/components/HomeCards";
 import PackCard from "@/components/PackCard";
 import { IconGo } from "@/components/ui/Icons";
-import { Pack } from "@/infraestructure/interfaces/PackInterface";
-import { Image } from "expo-image";
-import { useCallback } from "react";
-import { FlatList, ListRenderItem, Pressable, Text, View } from "react-native";
 
 export default function HomeTab() {
 

@@ -1,31 +1,52 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, ScrollView } from "react-native";
 import React, { useState } from "react";
-import { TextInput } from "react-native-paper";
+import { ActivityIndicator, TextInput } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
 import { IconGo } from "@/components/ui/Icons";
 import { ModalCard } from "@/components/Modal";
+import InputThemed from "@/components/ui/InputThemed";
+import { User } from "firebase/auth";
+import { useAuthStore } from "@/components/store/useAuth";
+import { changePassword } from "@/utils/auth";
 
 interface Card {
   number: string;
   type: string;
   month: number;
-  year: number
+  year: number;
 }
 
 const SecurityProfile = () => {
-  const [password, setPassword] = useState<{
+  const user: User | null = useAuthStore((state) => state.user);
+  const [loading, setIsLoading] = useState<boolean>(false);
+  const [update, setUpdate] = useState<{
     oldPassword: string;
     newPassword: string;
   }>({
     oldPassword: "",
     newPassword: "",
   });
-  const info:Card = {
+
+  const [icon, setIcon] = useState<{
+    old: string;
+    seeOld: boolean;
+    new: string;
+    seeNew: boolean;
+  }>({
+    old: "eye",
+    new: "eye",
+    seeOld: true,
+    seeNew: true,
+  });
+
+  const info: Card = {
     number: "7654",
     month: 12,
     year: 29,
-    type: 'Visa'
+    type: "Visa",
   };
+  const [validForm, setIsValidForm] = useState<boolean>(false);
+
   const [modalProps, setModalProps] = useState<{
     label: string;
     isOpen: boolean;
@@ -36,8 +57,19 @@ const SecurityProfile = () => {
     showDelete: true,
   });
 
+  const handleUpdate = async() => {
+    setIsLoading(true);
+    try {
+      await changePassword(user, update.oldPassword, update.newPassword);
+      alert('¡La contraseña ha sido cambiada con éxito!')
+    } catch (error) {
+      if (error instanceof Error) alert(error.message);
+    }
+    setIsLoading(false);
+  };
+
   return (
-    <View className="px-6 my-4">
+    <ScrollView className="px-6 my-4">
       <Text className="text-3xl font-semibold text-center text-color">
         Seguridad
       </Text>
@@ -45,36 +77,68 @@ const SecurityProfile = () => {
         <Text className="text-xl text-center text-color font-normal">
           Cambiar contraseña
         </Text>
-        <TextInput
-          className="bg-background"
+        <InputThemed
           label="Ingrese su actual contraseña"
           autoCapitalize="none"
-          mode="flat"
-          secureTextEntry
-          inputMode="text"
-          textColor={Colors.color}
-          underlineColor={Colors.color}
-          activeUnderlineColor={Colors.button}
-          value={password.oldPassword}
-          onChangeText={(value) =>
-            setPassword({ ...password, oldPassword: value })
+          secureTextEntry={icon.seeOld}
+          updateText={(text) =>
+            setUpdate((prev) => ({
+              ...prev,
+              oldPassword: text,
+            }))
+          }
+          right={
+            <TextInput.Icon
+              onPress={() =>
+                setIcon((prev) => ({
+                  ...prev,
+                  seeOld: !prev.seeOld,
+                  old: prev.old === "eye" ? "eye-off" : "eye",
+                }))
+              }
+              icon={icon.old}
+              color={Colors.color}
+            />
           }
         />
-        <TextInput
-          className="bg-background"
-          label="Ingrese su nueva contraseña"
+        <InputThemed
+          label="Ingrese su actual contraseña"
           autoCapitalize="none"
-          mode="flat"
-          secureTextEntry
-          inputMode="text"
-          textColor={Colors.color}
-          underlineColor={Colors.color}
-          activeUnderlineColor={Colors.button}
-          value={password.newPassword}
-          onChangeText={(value) =>
-            setPassword({ ...password, newPassword: value })
+          secureTextEntry={icon.seeNew}
+          updateText={(text, disabled) => {
+            setUpdate((prev) => ({
+              ...prev,
+              newPassword: text,
+            }));
+            setIsValidForm(disabled);
+          }}
+          right={
+            <TextInput.Icon
+              onPress={() =>
+                setIcon((prev) => ({
+                  ...prev,
+                  seeNew: !prev.seeNew,
+                  new: prev.new === "eye" ? "eye-off" : "eye",
+                }))
+              }
+              icon={icon.new}
+              color={Colors.color}
+            />
           }
         />
+        <Pressable
+          disabled={!validForm}
+          onPress={() =>handleUpdate()}
+          className={`py-4 rounded-xl my-4 active:bg-button/60 ${validForm ? "bg-button" : "bg-gray-300"}`}
+        >
+          {loading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text className="text-white text-center text-xl font-semibold">
+              Registrarse
+            </Text>
+          )}
+        </Pressable>
       </View>
       <View className="p-4 my-4 border border-color rounded-xl flex gap-4">
         <Text className="text-xl text-center text-color font-normal">
@@ -118,7 +182,7 @@ const SecurityProfile = () => {
         onClose={() => setModalProps((prev) => ({ ...prev, isOpen: false }))}
         onSendData={(text) => console.log(text)}
       />
-    </View>
+    </ScrollView>
   );
 };
 

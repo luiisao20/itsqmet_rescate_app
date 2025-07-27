@@ -5,6 +5,7 @@ import { Portal, TextInput } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
 import { Time } from "@/app/(slot)/(cart)/pay";
 import { Selection } from "./Selection";
+import InputThemed from "./ui/InputThemed";
 
 export interface Card {
   number: string;
@@ -13,7 +14,7 @@ export interface Card {
   type: string;
 }
 
-interface InputProps extends ModalProps {
+export interface InputProps extends ModalProps {
   isOpen: boolean;
   label?: string;
   inputMode?: "decimal" | "email" | "numeric" | "text";
@@ -24,6 +25,8 @@ interface InputProps extends ModalProps {
     description: string;
   };
   showDelete?: boolean;
+  message?: string;
+  labelButton?: string;
 
   onClose: () => void;
   onSendData?: (text: string) => void;
@@ -37,16 +40,15 @@ export const ModalInput = ({
   label,
   inputMode = "text",
   textValue = "",
+  message = "¿Quieres actualizar tu nombre?",
+  labelButton = "Guardar",
 
   onClose,
   onSendData = () => console.log("no implementado"),
   ...rest
 }: InputProps) => {
   const [text, setText] = useState<string>("");
-
-  useEffect(() => {
-    setText(textValue);
-  }, [textValue]);
+  const [disabled, setDisabled] = useState<boolean>(true);
 
   return (
     <Modal
@@ -64,29 +66,26 @@ export const ModalInput = ({
           >
             <IconClose className="text-color" />
           </Pressable>
-          <Text className="text-xl font-normal">
-            ¿Quieres actualizar tu nombre?
-          </Text>
+          <Text className="text-xl font-normal">{message}</Text>
           <View className="w-full">
-            <TextInput
-              className="bg-white"
-              label={label}
-              autoCapitalize="words"
-              mode="flat"
-              inputMode={inputMode}
-              textColor={Colors.color}
-              underlineColor={Colors.color}
-              activeUnderlineColor={Colors.button}
+            <InputThemed
               value={text}
-              onChangeText={(text) => setText(text)}
+              updateText={(text, disabled) => {
+                setText(text);
+                setDisabled(!disabled);
+              }}
+              label={label}
+              inputMode={inputMode}
+              autoCapitalize={inputMode === "email" ? "none" : "words"}
             />
           </View>
           <Pressable
-            className="bg-button rounded-lg w-full mt-4 active:bg-button/60"
+            disabled={disabled}
+            className="bg-button rounded-lg w-full mt-4 active:bg-button/60 disabled:bg-slate-500"
             onPress={() => onSendData(text)}
           >
             <Text className="text-white py-3 text-center text-base font-bold">
-              Guardar
+              {labelButton}
             </Text>
           </Pressable>
         </View>

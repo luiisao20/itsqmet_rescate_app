@@ -1,23 +1,35 @@
 import { View, Text, KeyboardAvoidingView, Pressable } from "react-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Image } from "expo-image";
-import { TextInput } from "react-native-paper";
+import { ActivityIndicator, TextInput } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { registerUser } from "@/utils/auth";
+import InputThemed from "@/components/ui/InputThemed";
+
+interface Login {
+  name: string;
+  lastName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  seePassword: boolean;
+  seeConfirmPassword: boolean;
+  icon: string;
+  iconConfirm: string;
+}
+
+interface ValidForm {
+  name: boolean;
+  lastName: boolean;
+  email: boolean;
+  password: boolean;
+  confirmPassword: boolean;
+}
 
 const RegisterScreen = () => {
-  const [login, setLogin] = useState<{
-    name: string;
-    lastName: string;
-    email: string;
-    password: string;
-    confirmPassword: string;
-    seePassword: boolean;
-    seeConfirmPassword: boolean;
-    icon: string;
-    iconConfirm: string;
-  }>({
+  const [login, setLogin] = useState<Login>({
     name: "",
     lastName: "",
     email: "",
@@ -28,8 +40,52 @@ const RegisterScreen = () => {
     icon: "eye",
     iconConfirm: "eye",
   });
+  const [validForm, setValidForm] = useState<ValidForm>({
+    name: false,
+    lastName: false,
+    email: false,
+    password: false,
+    confirmPassword: false,
+  });
+  const [loading, setIsLoading] = useState<boolean>(false);
+
+  const register = async () => {
+    if (validForm.confirmPassword) {
+      setError({
+        show: true,
+        message: "Las contraseñas no coinciden",
+      });
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const res = await registerUser(login.email, login.password);
+      router.push("/login");
+    } catch (error) {
+      if (error instanceof Error) alert(error.message);
+    }
+    setIsLoading(false);
+  };
+
+  const [isFormValid, setIsFormValid] = useState<boolean>(false);
+  const [error, setError] = useState<{ show: boolean; message: string }>({
+    message: "",
+    show: false,
+  });
+
+  useEffect(() => {
+    const allValid = Object.values(validForm).every(Boolean);
+    setIsFormValid(allValid);
+    console.log(validForm);
+  }, [validForm]);
+
+  useEffect(() => {
+    const equals = login.confirmPassword === login.password;
+    setValidForm((prev) => ({ ...prev, confirmPassword: equals }));
+  }, [login.password, login.confirmPassword]);
 
   return (
+    <KeyboardAvoidingView behavior="position">
       <SafeAreaView>
         <View className="bg-background w-[95%] p-4 rounded-xl mx-auto">
           <Image
@@ -46,66 +102,42 @@ const RegisterScreen = () => {
             <Text className="text-2xl text-center my-4 text-color font-semibold">
               Crea tu nueva cuenta
             </Text>
-            <TextInput
+            <InputThemed
               label="Nombre"
-              className="bg-background w-full"
               autoCapitalize="words"
-              textColor={Colors.color}
-              underlineColor={Colors.color}
-              activeUnderlineColor={Colors.button}
-              inputMode="text"
-              onChangeText={(text) =>
-                setLogin((prev) => ({
-                  ...prev,
-                  name: text,
-                }))
-              }
+              updateText={(text, disabled) => {
+                setLogin((prev) => ({ ...prev, name: text }));
+                setValidForm((prev) => ({ ...prev, name: disabled }));
+              }}
             />
-            <TextInput
+            <InputThemed
               label="Apellido"
-              className="bg-background w-full"
               autoCapitalize="words"
-              textColor={Colors.color}
-              underlineColor={Colors.color}
-              activeUnderlineColor={Colors.button}
-              inputMode="text"
-              onChangeText={(text) =>
-                setLogin((prev) => ({
-                  ...prev,
-                  lastName: text,
-                }))
-              }
+              updateText={(text, disabled) => {
+                setLogin((prev) => ({ ...prev, lastName: text }));
+                setValidForm((prev) => ({ ...prev, lastName: disabled }));
+              }}
             />
-            <TextInput
+            <InputThemed
               label="Correo electrónico"
-              className="bg-background w-full"
               autoCapitalize="none"
-              textColor={Colors.color}
-              underlineColor={Colors.color}
-              activeUnderlineColor={Colors.button}
-              inputMode="email"
-              onChangeText={(text) =>
-                setLogin((prev) => ({
-                  ...prev,
-                  email: text,
-                }))
-              }
+              updateText={(text, disabled) => {
+                setLogin((prev) => ({ ...prev, email: text }));
+                setValidForm((prev) => ({ ...prev, email: disabled }));
+              }}
               right={<TextInput.Icon icon="email" color={Colors.color} />}
             />
-            <TextInput
+            <InputThemed
               label="Contraseña"
               autoCapitalize="none"
-              className="bg-background w-full"
-              textColor={Colors.color}
-              underlineColor={Colors.color}
-              activeUnderlineColor={Colors.button}
               secureTextEntry={login.seePassword}
-              onChangeText={(text) =>
+              updateText={(text, disabled) => {
                 setLogin((prev) => ({
                   ...prev,
                   password: text,
-                }))
-              }
+                }));
+                setValidForm((prev) => ({ ...prev, password: disabled }));
+              }}
               right={
                 <TextInput.Icon
                   onPress={() =>
@@ -120,15 +152,12 @@ const RegisterScreen = () => {
                 />
               }
             />
-            <TextInput
+            <InputThemed
               label="Confirmar contraseña"
               autoCapitalize="none"
-              className="bg-background w-full"
-              textColor={Colors.color}
-              underlineColor={Colors.color}
-              activeUnderlineColor={Colors.button}
+              id="confirm-password"
               secureTextEntry={login.seeConfirmPassword}
-              onChangeText={(text) =>
+              updateText={(text) =>
                 setLogin((prev) => ({
                   ...prev,
                   confirmPassword: text,
@@ -149,14 +178,22 @@ const RegisterScreen = () => {
                 />
               }
             />
+            <Text className="text-danger font-light mt-4 px-2 text-xs">
+              {`Error! ${error.message}`}
+            </Text>
           </View>
           <Pressable
-            onPress={() => router.push("/(slot)/(tabs)")}
-            className="bg-button py-4 rounded-xl my-4 active:bg-button/60"
+            disabled={!isFormValid}
+            onPress={() => register()}
+            className={`py-4 rounded-xl my-4 active:bg-button/60 ${isFormValid ? "bg-button" : "bg-gray-300"}`}
           >
-            <Text className="text-white text-center text-xl font-semibold">
-              Registrarse
-            </Text>
+            {loading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text className="text-white text-center text-xl font-semibold">
+                Registrarse
+              </Text>
+            )}
           </Pressable>
           <Pressable onPress={() => router.push("/(slot)/(auth)/login")}>
             <Text className="text-lg">
@@ -168,6 +205,7 @@ const RegisterScreen = () => {
           </Pressable>
         </View>
       </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 };
 

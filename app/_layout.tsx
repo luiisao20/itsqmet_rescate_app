@@ -8,8 +8,22 @@ import { useEffect } from "react";
 
 import "../global.css";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { useAuthStore } from "@/components/store/useAuth";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/firebase/firebase.config";
 
 export default function RootLayout() {
+  const setUser = useAuthStore((state) => state.setUser);
+  const setLoading = useAuthStore((state) => state.setLoading);
+
+  useEffect(() => {
+    const unsuscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+    return unsuscribe;
+  }, []);
+
   useEffect(() => {
     NavigationBar.setBackgroundColorAsync("#ffffff");
     NavigationBar.setButtonStyleAsync("dark");

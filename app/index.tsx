@@ -1,9 +1,13 @@
-import React from "react";
 import { Redirect } from "expo-router";
+import { useAuthStore } from "@/components/store/useAuth";
+import {ActivityIndicator} from "react-native-paper";
 
 const IndexScreen = () => {
-  return <Redirect href={'/(slot)/(tabs)'} />
-  // return <Redirect href={"/(slot)/(packs)/details/[id]"} />;
+  const { user, isLoading } = useAuthStore();
+
+  if (isLoading) return <ActivityIndicator size={60} />
+
+  return user ? <Redirect href={'/(slot)/(tabs)'} /> : <Redirect href={"/login"} />;
 };
 
 export default IndexScreen;

@@ -1,17 +1,29 @@
 import { View, Text, Pressable } from "react-native";
-import React from "react";
-import { IconProfileHome } from "@/components/ui/Icons";
-import { Colors } from "@/constants/Colors";
-import HomeCards from "@/components/HomeCards";
+import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { router } from "expo-router";
+
+import { Colors } from "@/constants/Colors";
+import { logout } from "@/utils/auth";
+
+import HomeCards from "@/components/HomeCards";
+import { IconProfileHome } from "@/components/ui/Icons";
 import { ProfileTabParamList } from "../_layout";
-import {router} from "expo-router";
+import { ActivityIndicator } from "react-native-paper";
 
 type NavigationProp = NativeStackNavigationProp<ProfileTabParamList>;
 
 const InfoProfile = () => {
   const navigation = useNavigation<NavigationProp>();
+  const [loading, setIsLoading] = useState<boolean>(false);
+
+  const handleLogout = async () => {
+    setIsLoading(true);
+    await logout();
+    setIsLoading(false);
+    router.replace("/login");
+  };
 
   return (
     <View className="px-6 my-4">
@@ -36,10 +48,17 @@ const InfoProfile = () => {
           onPress={() => navigation.navigate("Seguridad")}
         />
       </View>
-      <Pressable onPress={() => router.replace('/login')} className="bg-button p-4 rounded-xl active:bg-button/60 my-4">
-        <Text className="text-white text-xl text-center font-semibold">
-          Cerrar sesión
-        </Text>
+      <Pressable
+        onPress={() => handleLogout()}
+        className="bg-button p-4 rounded-xl active:bg-button/60 my-4"
+      >
+        {loading ? (
+          <ActivityIndicator color="white" />
+        ) : (
+          <Text className="text-white text-xl text-center font-semibold">
+            Cerrar sesión
+          </Text>
+        )}
       </Pressable>
     </View>
   );

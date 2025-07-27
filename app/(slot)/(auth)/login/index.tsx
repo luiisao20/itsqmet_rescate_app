@@ -2,22 +2,43 @@ import { useState } from "react";
 import { View, Text, KeyboardAvoidingView, Pressable } from "react-native";
 import { router } from "expo-router";
 
-import { TextInput } from "react-native-paper";
+import { ActivityIndicator, TextInput } from "react-native-paper";
 import { Image } from "expo-image";
 import { Colors } from "@/constants/Colors";
+import { loginUser } from "@/utils/auth";
+import { ModalInput } from "@/components/Modal";
+
+interface Login {
+  email: string;
+  password: string;
+  seePassword: boolean;
+  icon: string;
+}
 
 const LoginScreen = () => {
-  const [login, setLogin] = useState<{
-    email: string;
-    password: string;
-    seePassword: boolean;
-    icon: string;
-  }>({
+  const [login, setLogin] = useState<Login>({
     email: "",
     password: "",
     seePassword: true,
     icon: "eye",
   });
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [open, setIsOpen] = useState<boolean>(false);
+
+  const handleLogin = async () => {
+    setIsLoading(true);
+
+    try {
+      const user = await loginUser(login.email, login.password);
+      router.push("/(slot)/(tabs)");
+    } catch (error) {
+      if (error instanceof Error) {
+        alert(error.message);
+      }
+    }
+
+    setIsLoading(false);
+  };
 
   return (
     <KeyboardAvoidingView
@@ -85,14 +106,30 @@ const LoginScreen = () => {
           />
         </View>
         <Pressable
-          onPress={() => router.push("/(slot)/(tabs)")}
+          onPress={() => handleLogin()}
+          disabled={isLoading}
           className="bg-button py-4 rounded-xl my-4 active:bg-button/60"
         >
-          <Text className="text-white text-center text-xl font-semibold">
-            Iniciar sesión
+          {isLoading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text className="text-white text-center text-xl font-semibold">
+              Iniciar sesión
+            </Text>
+          )}
+        </Pressable>
+        <Pressable
+          onPress={() => setIsOpen(true)}
+          className="my-4"
+        >
+          <Text className="text-lg">
+            ¿Olvidaste tu contraseña?{" "}
+            <Text className="text-color underline underline-offset-2">
+              Haz clic aquí.
+            </Text>
           </Text>
         </Pressable>
-        <Pressable onPress={() => router.push('/(slot)/(auth)/register')}>
+        <Pressable onPress={() => router.push("/(slot)/(auth)/register")}>
           <Text className="text-lg">
             ¿No posees una cuenta?{" "}
             <Text className="text-color underline underline-offset-2">
@@ -101,6 +138,15 @@ const LoginScreen = () => {
           </Text>
         </Pressable>
       </View>
+      <ModalInput
+        isOpen={open}
+        inputMode="email"
+        label="Correo electrónico"
+        labelButton="Enviar"
+        message="Envía un correo de reestablecimiento de contraseña"
+        onClose={() => setIsOpen(false)}
+        onSendData={(text) => console.log(text)}
+      />
     </KeyboardAvoidingView>
   );
 };
