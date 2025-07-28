@@ -87,7 +87,7 @@ export const changePassword = async (
 ) => {
 
   try {
-    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    const credential = EmailAuthProvider.credential(user.email!, currentPassword);
 
     await reauthenticateWithCredential(user, credential);
     await updatePassword(user, newPassword);

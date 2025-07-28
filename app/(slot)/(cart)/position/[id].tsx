@@ -1,62 +1,89 @@
 import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { useEffect, useRef, useState } from "react";
-import { useLocalSearchParams } from "expo-router";
-import { getSomeLocation } from "@/hooks/getLocations";
+import { router, useLocalSearchParams } from "expo-router";
 import MapView, { LatLng, Region } from "react-native-maps";
 import { IconCompass, IconMapPin } from "@/components/ui/Icons";
 import { Colors } from "@/constants/Colors";
 import { useLocationStore } from "@/components/store/useLocationStore";
 import { ModalLocation } from "@/components/Modal";
+import { useAddressStore } from "@/components/store/useAddressStore";
+import { deleteAddress } from "@/utils/database";
+import { useCustomerStore } from "@/components/store/useDb";
+
+interface ModalProps {
+  isOpen: boolean;
+  infoLocation: {
+    alias: string;
+    description: string;
+    latitude: number | undefined;
+    longitude: number | undefined;
+  };
+}
 
 const EditAdress = () => {
   const { lastKnwonLocation, locationAddress, getAddress, getLocation } =
     useLocationStore();
+  const { getAddressById, fetchAddresses } = useAddressStore();
 
   const { id } = useLocalSearchParams();
   const isNew = id === "new";
-  const { location, alias, address } = isNew
-    ? {
-        location: lastKnwonLocation,
-        alias: "Mi ubicacion",
-        address: locationAddress
-          ? `${locationAddress?.street}, ${locationAddress?.city}`
-          : "Ubicacion acual",
-      }
-    : getSomeLocation(id);
+  const selectedAddress = !isNew ? getAddressById(id) : null;
+  const { customer } = useCustomerStore();
 
   const mapRef = useRef<MapView>(null);
   const didMount = useRef(false);
   const [region, setRegion] = useState<Region>();
+  const [loading, setIsLoading] = useState<boolean>(false);
   const [newAddres, setNewAddress] = useState<string>();
-  const [showSave, setShowSave] = useState<boolean>(false);
-  const [modalProps, setModalProps] = useState<{
-    isOpen: boolean;
-    infoLocation: {
-      alias: string;
-      description: string;
-    };
-  }>({
+  const [modalProps, setModalProps] = useState<ModalProps>({
     isOpen: false,
     infoLocation: {
-      description: address,
-      alias: alias,
+      description: selectedAddress?.description || "Ubicación actual",
+      alias: selectedAddress?.alias || "Mi ubicación",
+      latitude: selectedAddress?.latitude,
+      longitude: selectedAddress?.longitude,
     },
   });
 
   useEffect(() => {
-    if (!location || !location.latitude || !location.longitude) {
-      getLocation();
-      return;
-    }
+    const loadInitialRegion = async () => {
+      if (!isNew && selectedAddress) {
+        setRegion({
+          latitude: selectedAddress.latitude,
+          longitude: selectedAddress.longitude,
+          latitudeDelta: 0.0005,
+          longitudeDelta: 0.005,
+        });
+        setNewAddress(selectedAddress.description);
+        return;
+      }
 
-    setRegion({
-      latitude: location.latitude,
-      longitude: location.longitude,
-      latitudeDelta: 0.0005,
-      longitudeDelta: 0.005,
-    });
-    setNewAddress(address);
-  }, [location]);
+      const currentLocation = await getLocation();
+      const currentAddress = await getAddress(currentLocation);
+      const formattedAddress = `${currentAddress?.street}, ${currentAddress?.city}`;
+
+      setRegion({
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+        latitudeDelta: 0.0005,
+        longitudeDelta: 0.005,
+      });
+
+      setNewAddress(formattedAddress);
+
+      setModalProps((prev) => ({
+        ...prev,
+        infoLocation: {
+          alias: "Mi ubicación",
+          description: formattedAddress,
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude,
+        },
+      }));
+    };
+
+    loadInitialRegion();
+  }, []);
 
   const handleRegionChange = (newRegion: Region) => {
     if (!didMount.current) {
@@ -64,7 +91,6 @@ const EditAdress = () => {
       return;
     }
 
-    setShowSave(true);
     const newLocation: LatLng = {
       latitude: newRegion.latitude,
       longitude: newRegion.longitude,
@@ -81,6 +107,8 @@ const EditAdress = () => {
       infoLocation: {
         ...prev.infoLocation,
         description: currentAddress,
+        latitude: newLocation.latitude,
+        longitude: newLocation.longitude,
       },
     }));
 
@@ -110,6 +138,20 @@ const EditAdress = () => {
     followCurrentLocation(lastKnwonLocation);
   };
 
+  const handleDelete = async () => {
+    setIsLoading(true);
+
+    try {
+      await deleteAddress(id);
+      fetchAddresses(customer?.id!);
+      router.dismiss();
+    } catch (error) {
+      console.log(error);
+    }
+
+    setIsLoading(false);
+  };
+
   if (lastKnwonLocation === null && isNew) {
     return (
       <View className="flex-1 justify-center items-center">
@@ -120,7 +162,9 @@ const EditAdress = () => {
 
   return (
     <View className="px-6 py-4">
-      <Text className="text-2xl text-color text-center">{alias}</Text>
+      <Text className="text-2xl text-color text-center">
+        {modalProps.infoLocation.alias}
+      </Text>
       <Text className="text-xl text-color font-light">{newAddres}</Text>
       <View className="relative h-3/5 my-4">
         <MapView
@@ -128,9 +172,6 @@ const EditAdress = () => {
           region={region}
           onRegionChangeComplete={(region) => handleRegionChange(region)}
           style={{ height: "100%", width: "100%" }}
-          onLongPress={(coordinate) => {
-            console.log(coordinate);
-          }}
         />
         <View className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-full">
           <IconMapPin color={Colors.color} />
@@ -154,13 +195,16 @@ const EditAdress = () => {
         >
           <Text className="text-xl text-white font-semibold">Editar</Text>
         </Pressable>
-        {showSave && (
-          <Pressable className="bg-success p-4 rounded-xl active:bg-success/60">
-            <Text className="text-xl text-white font-semibold">Guardar</Text>
-          </Pressable>
-        )}
-        <Pressable className="bg-danger p-4 rounded-xl active:bg-danger/60">
-          <Text className="text-xl text-white font-semibold">Eliminar</Text>
+        <Pressable
+          disabled={loading}
+          onPress={handleDelete}
+          className="bg-danger p-4 rounded-xl active:bg-danger/60"
+        >
+          {loading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text className="text-xl text-white font-semibold">Eliminar</Text>
+          )}
         </Pressable>
       </View>
       <ModalLocation
@@ -172,7 +216,6 @@ const EditAdress = () => {
             isOpen: false,
           }))
         }
-        onUpdateLocation={() => console.log("Por implementar")}
       />
     </View>
   );

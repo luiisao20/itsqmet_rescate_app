@@ -3,13 +3,15 @@ import { useEffect, useLayoutEffect, useState } from "react";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { Colors } from "@/constants/Colors";
 import { getPacks } from "@/hooks/getPacks";
-import { Pack } from "@/infraestructure/interfaces/PackInterface";
 import { FlatList } from "react-native-gesture-handler";
 import PackCard from "@/components/PackCard";
+import { PackageDB } from "@/infraestructure/database/tables";
+import { useFavStore, usePacksStore } from "@/components/store/usePacksStore";
 
 const IndexPacks = () => {
   const { id } = useLocalSearchParams();
   const navigation = useNavigation();
+  const { packs } = usePacksStore();
 
   const title = (id: string | string[]): string => {
     switch (id) {
@@ -27,7 +29,8 @@ const IndexPacks = () => {
         return "Packs";
     }
   };
-  const [packs, setPacks] = useState<Pack[]>();
+  const [ownPacks, setOwnPacks] = useState<PackageDB[]>();
+  const {favorites} = useFavStore();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -39,20 +42,20 @@ const IndexPacks = () => {
   }, [navigation, id]);
 
   useEffect(() => {
-    setPacks(getPacks(id));
+    if (id === 'favorite') setOwnPacks(favorites)
+    else setOwnPacks(packs[id as string]);
   }, []);
+
+  useEffect(() => {
+    setOwnPacks(favorites)
+  }, [favorites])
 
   return (
     <View className="bg-white">
       <FlatList
         className="px-6 my-4"
-        data={packs}
-        renderItem={({ item }) => (
-          <PackCard
-            info={item}
-            className="my-2"
-          />
-        )}
+        data={ownPacks}
+        renderItem={({ item }) => <PackCard info={item} className="my-2" />}
       />
     </View>
   );

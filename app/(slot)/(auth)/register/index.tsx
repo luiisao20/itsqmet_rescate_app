@@ -76,7 +76,6 @@ const RegisterScreen = () => {
   useEffect(() => {
     const allValid = Object.values(validForm).every(Boolean);
     setIsFormValid(allValid);
-    console.log(validForm);
   }, [validForm]);
 
   useEffect(() => {

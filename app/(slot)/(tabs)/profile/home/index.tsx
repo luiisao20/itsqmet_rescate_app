@@ -11,12 +11,14 @@ import HomeCards from "@/components/HomeCards";
 import { IconProfileHome } from "@/components/ui/Icons";
 import { ProfileTabParamList } from "../_layout";
 import { ActivityIndicator } from "react-native-paper";
+import { useCustomerStore } from "@/components/store/useDb";
 
 type NavigationProp = NativeStackNavigationProp<ProfileTabParamList>;
 
 const InfoProfile = () => {
   const navigation = useNavigation<NavigationProp>();
   const [loading, setIsLoading] = useState<boolean>(false);
+  const { customer } = useCustomerStore();
 
   const handleLogout = async () => {
     setIsLoading(true);
@@ -32,9 +34,9 @@ const InfoProfile = () => {
         color={Colors.color}
         className="text-center"
       />
-      <Text className="text-2xl text-color font-bold text-center">Luis</Text>
+      <Text className="text-2xl text-color font-bold text-center">{customer?.name}</Text>
       <Text className="text-xl text-color font-light text-center">
-        bravo.luis.1995@gmail.com
+        {customer?.email}
       </Text>
       <View className="flex flex-row gap-4 my-4 justify-center">
         <HomeCards

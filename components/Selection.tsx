@@ -13,8 +13,8 @@ interface Props extends PressableProps {
   id: string;
   price?: number | null;
   label: string;
-  description: string;
-  selected: string;
+  description?: string;
+  selected?: string;
   time?: string;
 
   setSelected: (id: string) => void;
@@ -24,8 +24,8 @@ export const Selection = ({
   id,
   price = null,
   label,
-  selected,
-  description,
+  selected = "",
+  description = "",
   time,
 
   setSelected,
@@ -45,7 +45,11 @@ export const Selection = ({
       {...rest}
       onPress={() => setSelected(id)}
       className={`rounded-xl border-2 px-4 py-3 ${
-        selected === id ? "border-button bg-button/30" : "border-gray-300"
+        selected === id
+          ? "border-button bg-button/30"
+          : selected === ""
+            ? "active:bg-gray-400"
+            : "border-gray-300"
       }`}
     >
       <View className="flex flex-row items-center justify-between">
@@ -69,6 +73,4 @@ export const Selection = ({
   );
 };
 
-export const AddressSelection = () => {
-  
-}
+export const AddressSelection = () => {};

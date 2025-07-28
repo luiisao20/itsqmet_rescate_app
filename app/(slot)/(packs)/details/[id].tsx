@@ -1,11 +1,4 @@
-import {
-  View,
-  Text,
-  StatusBar,
-  ScrollView,
-  Pressable,
-  Linking,
-} from "react-native";
+import { View, Text, StatusBar, Pressable, Linking } from "react-native";
 import React, {
   useCallback,
   useEffect,
@@ -19,7 +12,6 @@ import {
   useNavigation,
 } from "expo-router";
 import { Colors } from "@/constants/Colors";
-import { Pack } from "@/infraestructure/interfaces/PackInterface";
 import HeaderPackSolo from "@/components/ui/HeaderPackSolo";
 import {
   IconBag,
@@ -31,6 +23,8 @@ import {
 import { LatLng } from "@/infraestructure/interfaces/lat-lang";
 import { ModalProps } from "@/components/PackCard";
 import { ModalInfo } from "@/components/Modal";
+import { useCartStore, usePacksStore } from "@/components/store/usePacksStore";
+import { PackageDB } from "@/infraestructure/database/tables";
 
 interface Address {
   label: string;
@@ -40,16 +34,8 @@ interface Address {
 const DetailsScreen = () => {
   const { id } = useLocalSearchParams();
   const navigation = useNavigation();
-  const currentPack: Pack = {
-    title: "Kentucky Fried Chicken",
-    price: 8.99,
-    distance: 1,
-    rate: 4.8,
-    pickUp: "12:00PM - 1:00PM",
-    packsLeft: 3,
-    logo: require("@/assets/images/packs/logo-kfc.png"),
-    background: require("@/assets/images/packs/background-kfc.png"),
-  };
+  const { getSelectedPack } = usePacksStore();
+  const [currentPack, setCurrentPack] = useState<PackageDB | null>();
   const [enabled, setEnabled] = useState<boolean>(true);
   const address: Address = {
     label: "Diagonal a parada de metro, Av. 6 de Diciembre, Quito 170402",
@@ -64,14 +50,23 @@ const DetailsScreen = () => {
     isOpen: false,
     cart: false,
   });
+  const { addToCart, removeFromCart } = useCartStore();
+  const [remove, setRemove] = useState<boolean>(false);
 
   useEffect(() => {
+    const selected = getSelectedPack();
+    setCurrentPack(selected);
+  }, []);
+
+  useEffect(() => {
+    if (!currentPack) return;
+
     setEnabled(currentPack.packsLeft > 0);
     setModalProps((prev) => ({
       ...prev,
       product: currentPack.title,
     }));
-  }, []);
+  }, [currentPack]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -96,19 +91,11 @@ const DetailsScreen = () => {
     );
   };
 
+  if (!currentPack) return <Text>Cargando...</Text>;
+
   return (
     <View className="flex flex-1">
-      <HeaderPackSolo
-        onSetFavorite={() =>
-          setModalProps((prev) => ({
-            ...prev,
-            isOpen: true,
-            message: "ha sido añadido a favoritos",
-          }))
-        }
-        pack={currentPack}
-        enabled={enabled}
-      />
+      <HeaderPackSolo pack={currentPack!} enabled={enabled} />
       <View className="px-6 my-4">
         <View className="flex gap-2">
           <View className="flex flex-row items-center gap-4">
@@ -120,7 +107,7 @@ const DetailsScreen = () => {
           <View className="flex flex-row items-baseline gap-4">
             <IconStar size={16} color={Colors.color} />
             <Text className="text-base font-semibold text-color">
-              {currentPack.rate}{" "}
+              {currentPack?.rate}{" "}
               <Text className="text-gray-700 font-light">(121)</Text>
             </Text>
           </View>
@@ -128,7 +115,7 @@ const DetailsScreen = () => {
             <IconStandard size={16} color={Colors.color} />
             <Text className="text-base font-semibold text-color">
               Recoger entre:{" "}
-              <Text className="font-light">{currentPack.pickUp}</Text>
+              <Text className="font-light">{currentPack?.pickUp}</Text>
             </Text>
           </View>
         </View>
@@ -149,12 +136,24 @@ const DetailsScreen = () => {
           <IconGo color={Colors.color} />
         </Pressable>
         <Pressable
-          onPress={() => setModalProps((prev) => ({ ...prev, isOpen: true }))}
+          onPress={() => {
+            if (remove) {
+              removeFromCart(currentPack.id!);
+              setRemove(false);
+            } else {
+              addToCart(currentPack);
+              setRemove(true);
+            }
+          }}
           className="bg-button p-4 rounded-xl active:bg-button/60 my-4"
         >
           <Text className="text-white text-center font-semibold text-xl">
-            Agregar al carrito ${currentPack.price}{" "}
+            {remove ? "Eliminar del carrito" : "Agregar al carrito"} ${" "}
+            {currentPack?.price}
           </Text>
+        </Pressable>
+        <Pressable onPress={()=> router.push('/(slot)/(cart)')} className="bg-success rounded-xl p-4 active:bg-success/60">
+          <Text className="text-white font-semibold text-center text-xl">Ir al carrito</Text>
         </Pressable>
       </View>
       <ModalInfo
@@ -168,7 +167,6 @@ const DetailsScreen = () => {
             message: "ha sido reservado en el carrito",
           }))
         }
-        onUnDone={() => console.log("Por implementar deshacer")}
         isOpen={modalProps.isOpen}
       />
     </View>

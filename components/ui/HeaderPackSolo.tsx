@@ -1,21 +1,33 @@
 import { View, Text, useWindowDimensions, Pressable } from "react-native";
 import React from "react";
 import { LinearGradient } from "expo-linear-gradient";
-import { Pack } from "@/infraestructure/interfaces/PackInterface";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import { IconGoBackLine, IconHeartOut } from "./Icons";
+import { IconGoBackLine, IconHeartFilled, IconHeartOut } from "./Icons";
 import LogoPack from "./LogoPack";
+import { PackageDB } from "@/infraestructure/database/tables";
+import { useFavStore } from "../store/usePacksStore";
+import { Colors } from "@/constants/Colors";
 
 interface Props {
-  pack: Pack;
+  pack: PackageDB;
   enabled: boolean;
-
-  onSetFavorite: () => void;
 }
 
-const HeaderPackSolo = ({ pack, enabled, onSetFavorite }: Props) => {
+const HeaderPackSolo = ({ pack, enabled }: Props) => {
   const { height } = useWindowDimensions();
+  const { getIsFavorite, addToFavorites, removeFromFavorites } = useFavStore();
+
+  const handleFavorite = () => {
+    const isFavorite = getIsFavorite(pack.id!);
+
+    if (isFavorite) {
+      removeFromFavorites(pack.id!);
+      return;
+    }
+
+    addToFavorites(pack);
+  };
 
   return (
     <View className="relative">
@@ -42,7 +54,7 @@ const HeaderPackSolo = ({ pack, enabled, onSetFavorite }: Props) => {
         }}
       />
       <Image
-        source={pack.background}
+        source={{ uri: pack.restaurant?.background }}
         style={{
           resizeMode: "contain",
           width: "100%",
@@ -56,11 +68,18 @@ const HeaderPackSolo = ({ pack, enabled, onSetFavorite }: Props) => {
         <Pressable onPress={() => router.back()}>
           <IconGoBackLine color="white" size={30} className="shadow" />
         </Pressable>
-        <Pressable onPress={() => onSetFavorite()} className="bg-white p-2 rounded-full active:scale-125 z-20">
-          <IconHeartOut />
+        <Pressable
+          onPress={handleFavorite}
+          className="bg-white p-2 rounded-full active:scale-125 z-20"
+        >
+          {getIsFavorite(pack.id!) ? (
+            <IconHeartFilled size={18} color={Colors.color} />
+          ) : (
+            <IconHeartOut size={18} />
+          )}
         </Pressable>
       </View>
-      <LogoPack route={pack.logo} title={pack.title} />
+      <LogoPack route={pack.restaurant?.logo!} title={pack.title} />
       <View
         className={`absolute p-2 rounded-xl bottom-[6rem] z-20 left-2 ${enabled ? "bg-button" : "bg-gray-500"}`}
       >

@@ -8,12 +8,14 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import PermissionCheckerProvider from "@/components/providers/PermissionCheckProvider";
+import { useCartStore } from "@/components/store/usePacksStore";
 
 const StackLayout = () => {
   const insets = useSafeAreaInsets();
   const name = usePathname();
   const showPay = name.includes("pay");
   const showFooter = name.includes("position");
+  const { getTotalPrice } = useCartStore();
 
   return (
     <PermissionCheckerProvider>
@@ -103,7 +105,7 @@ const StackLayout = () => {
           >
             <View>
               <Text className="text-lg font-light text-color">Subtotal</Text>
-              <Text className="text-2xl font-semibold text-color">$5.50</Text>
+              <Text className="text-2xl font-semibold text-color">$ {getTotalPrice().toFixed(2)}</Text>
             </View>
             <Pressable
               onPress={() =>

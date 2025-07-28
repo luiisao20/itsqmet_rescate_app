@@ -11,10 +11,12 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useAuthStore } from "@/components/store/useAuth";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/firebase/firebase.config";
+import { useCustomerStore } from "@/components/store/useDb";
 
 export default function RootLayout() {
-  const setUser = useAuthStore((state) => state.setUser);
-  const setLoading = useAuthStore((state) => state.setLoading);
+  const { user, setLoading, setUser } = useAuthStore();
+
+  const { fetchCustomer } = useCustomerStore();
 
   useEffect(() => {
     const unsuscribe = onAuthStateChanged(auth, (user) => {
@@ -23,6 +25,12 @@ export default function RootLayout() {
     });
     return unsuscribe;
   }, []);
+
+  useEffect(() => {
+    if (user?.email) {
+      fetchCustomer(user.email);
+    }
+  }, [user?.email]);
 
   useEffect(() => {
     NavigationBar.setBackgroundColorAsync("#ffffff");

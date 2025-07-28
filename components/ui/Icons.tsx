@@ -20,6 +20,10 @@ export const IconPack = ({ size = 24, color = "black", className }: Props) => (
   <MaterialCommunityIcons name="package" size={size} color={color} className={className} />
 );
 
+export const IconEmpty = ({ size = 24, color = "black", className }: Props) => (
+  <MaterialCommunityIcons name="cart-off" size={size} color={color} className={className} />
+);
+
 export const IconMap = ({ size = 24, color = "black", className }: Props) => (
   <MaterialCommunityIcons name="map-marker-right" size={size} color={color} className={className} />
 );

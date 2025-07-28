@@ -145,7 +145,6 @@ const LoginScreen = () => {
         labelButton="Enviar"
         message="Envía un correo de reestablecimiento de contraseña"
         onClose={() => setIsOpen(false)}
-        onSendData={(text) => console.log(text)}
       />
     </KeyboardAvoidingView>
   );

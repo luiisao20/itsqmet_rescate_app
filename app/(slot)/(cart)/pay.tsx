@@ -1,10 +1,14 @@
 import { View, Text, Pressable, ScrollView } from "react-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IconCard, IconCash, IconGo } from "@/components/ui/Icons";
 import { Colors } from "@/constants/Colors";
 import { ModalPayments } from "@/components/Modal";
 import { Selection } from "@/components/Selection";
 import { router } from "expo-router";
+import { useAddressStore } from "@/components/store/useAddressStore";
+import { useCardStore, useCustomerStore } from "@/components/store/useDb";
+import { CardDB } from "@/infraestructure/database/tables";
+import {useCartStore} from "@/components/store/usePacksStore";
 
 export type Time = {
   id: string;
@@ -15,11 +19,9 @@ export type Time = {
 };
 
 const PayScreen = () => {
-  const address =
-    "Lorem ipsum dolor sit amet consectetur adipisicing elit. Delectus soluta debitis ipsa est, assumenda necessitatibus voluptas deserunt voluptatum quas? Nihil sequi ut fuga error earum optio commodi pariatur tenetur labore.";
   const [selected, setSelected] = useState<string>("2");
+  const {getTotalPrice} = useCartStore();
 
-  const numberCard: string = "3234345698987654";
   const options: Time[] = [
     {
       id: "1",
@@ -45,6 +47,9 @@ const PayScreen = () => {
   ];
 
   const [paymentMethod, setPaymentMethod] = useState<string>("4");
+  const { getSelectedAddress } = useAddressStore();
+  const { fetchCards, getSelectedCard, selectedCardId } = useCardStore();
+  const { customer } = useCustomerStore();
 
   const [modalProps, setModalProps] = useState<{
     message: string;
@@ -56,29 +61,40 @@ const PayScreen = () => {
     index: 0,
   });
 
-  const renderPaymentMethod = (id: string) => {
-    if (id === "4") {
+  useEffect(() => {
+    fetchCards(customer?.id!);
+  }, []);
+
+  useEffect(() => {
+    renderPaymentMethod();
+  }, [selectedCardId]);
+
+  const renderPaymentMethod = () => {
+    const card: CardDB | null = getSelectedCard();
+
+    if (card) {
       return (
         <View className="flex flex-row items-center gap-4">
           <IconCard color={Colors.color} />
           <View>
             <Text className="text-lg font-light">
-              Crédito *{numberCard.slice(-4)}
+              {card.type} {card.number}
             </Text>
-            <Text>Luis Bravo</Text>
-          </View>
-        </View>
-      );
-    } else {
-      return (
-        <View className="flex flex-row items-center gap-4">
-          <IconCash color={Colors.color} />
-          <View>
-            <Text className="text-lg font-light">Efectivo</Text>
+            <Text>
+              {customer?.lastName} {customer?.name}
+            </Text>
           </View>
         </View>
       );
     }
+    return (
+      <View className="flex flex-row items-center gap-4">
+        <IconCash color={Colors.color} />
+        <View>
+          <Text className="text-lg font-light">Efectivo</Text>
+        </View>
+      </View>
+    );
   };
 
   return (
@@ -97,7 +113,9 @@ const PayScreen = () => {
               ellipsizeMode="tail"
               className="text-lg font-light"
             >
-              {address}
+              {getSelectedAddress()
+                ? getSelectedAddress()?.description
+                : "Escoger dirección"}
             </Text>
           </View>
           <IconGo color={Colors.color} />
@@ -131,12 +149,12 @@ const PayScreen = () => {
           </Pressable>
         </View>
         <View className="flex p-2 flex-row justify-between items-center border-b-2 border-color">
-          {renderPaymentMethod(paymentMethod)}
+          {renderPaymentMethod()}
         </View>
         <View className="bg-background p-4 rounded-xl flex gap-4">
           <View className="flex flex-row justify-between">
             <Text className="font-light text-lg text-color">Productos</Text>
-            <Text className="font-light text-lg text-color">$5.50</Text>
+            <Text className="font-light text-lg text-color">$ {getTotalPrice().toFixed(2)}</Text>
           </View>
           <View className="flex flex-row justify-between">
             <Text className="font-light text-lg text-color">

@@ -1,11 +1,11 @@
-import { View, Text, ImageSourcePropType } from "react-native";
+import { View, Text } from "react-native";
 import React, { useState } from "react";
 import { ActivityIndicator } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
 import { Image } from "expo-image";
 
 interface Props {
-  route: ImageSourcePropType;
+  route: string;
   title: string;
 }
 
@@ -32,7 +32,7 @@ const LogoPack = ({ route, title }: Props) => {
         )}
 
         <Image
-          source={route}
+          source={{ uri: route }}
           style={{
             height: 60,
             width: 60,

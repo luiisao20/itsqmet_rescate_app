@@ -1,94 +1,126 @@
-import { Pressable, View, Text, ScrollView } from "react-native";
-import { useState } from "react";
-import { IconGo, IconPencil, IconProfileHome } from "@/components/ui/Icons";
+import { Pressable, View, Text, KeyboardAvoidingView } from "react-native";
+import { useEffect, useState } from "react";
+import { IconPencil, IconProfileHome } from "@/components/ui/Icons";
 import { Colors } from "@/constants/Colors";
-import { ModalInput } from "@/components/Modal";
+import { useCustomerStore } from "@/components/store/useDb";
+import InputThemed from "@/components/ui/InputThemed";
+import { updateCustomer } from "@/utils/database";
+import { useAuthStore } from "@/components/store/useAuth";
+import { ActivityIndicator } from "react-native-paper";
+import {router} from "expo-router";
 
-type InputType = "decimal" | "email" | "numeric" | "text";
+interface ValidForm {
+  name: boolean;
+  lastName: boolean;
+  phone: boolean;
+}
 
 const ProfileHome = () => {
-  const [modalProps, setModalProps] = useState<{
-    label: string;
-    isOpen: boolean;
-    inputMode: InputType;
-    inputValue: string;
-  }>({
-    label: "",
-    isOpen: false,
-    inputMode: "text",
-    inputValue: ''
+  const { customer, fetchCustomer } = useCustomerStore();
+  const { user } = useAuthStore();
+  const [inputs, setInputs] = useState({
+    name: "",
+    lastName: "",
+    phone: "",
   });
+  const [validForm, setValidForm] = useState<ValidForm>({
+    name: true,
+    lastName: true,
+    phone: true,
+  });
+  const [isValid, setIsValid] = useState<boolean>(false);
+  const [loading, setIsLoading] = useState<boolean>(false);
 
-  const content: { label: string; type: InputType; data: string }[] = [
-    {
-      label: "Nombre",
-      type: "text",
-      data: "Luis Eduardo",
-    },
-    {
-      label: "Apellido",
-      type: "text",
-      data: "Bravo",
-    },
-    {
-      label: "Número de celular",
-      type: "numeric",
-      data: "+593 97 882 3632",
-    },
-    {
-      label: "Dirección",
-      type: "text",
-      data: "Quevedo, el Guayacan",
-    },
-  ];
+  useEffect(() => {
+    if (customer) {
+      setInputs({
+        name: customer.name,
+        lastName: customer.lastName,
+        phone: customer.phone ? customer.phone : "",
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    const allValid = Object.values(validForm).every(Boolean);
+    setIsValid(allValid && inputs.phone.length > 0);
+  }, [validForm]);
+
+  const hanldeUpdate = async () => {
+    setIsLoading(true);
+    if (customer?.id && user?.email) {
+      await updateCustomer(
+        inputs.name,
+        inputs.lastName,
+        inputs.phone,
+        customer.id
+      );
+      fetchCustomer(user.email);
+    }
+    setIsLoading(false);
+  };
 
   return (
-    <ScrollView>
+    <KeyboardAvoidingView behavior="padding">
       <View className="px-6 my-4">
         <View className="relative">
-          <IconProfileHome
-            size={120}
-            color={Colors.color}
-          />
+          <IconProfileHome size={120} color={Colors.color} />
           <Pressable className="absolute bottom-4 left-20 bg-button rounded-full">
             <IconPencil color="white" />
           </Pressable>
         </View>
-        {content.map((item, index) => (
-          <Pressable
-            key={index}
-            onPress={() =>
-              setModalProps((prev) => ({
-                ...prev,
-                isOpen: true,
-                label: item.label,
-                inputMode: item.type,
-                inputValue: item.data
-              }))
-            }
-            className="py-4 flex flex-row items-center justify-between border-b-2 border-color active:bg-gray-200"
-          >
-            <View>
-              <Text className="font-semibold text-xl text-color">
-                {item.label}
-              </Text>
-              <Text className="font-normal text-lg text-color">
-                {item.data}
-              </Text>
-            </View>
-            <IconGo size={20} />
-          </Pressable>
-        ))}
-        <ModalInput
-          label={modalProps.label}
-          isOpen={modalProps.isOpen}
-          textValue={modalProps.inputValue}
-          inputMode={modalProps.inputMode}
-          onClose={() => setModalProps((prev) => ({ ...prev, isOpen: false }))}
-          onSendData={(text) => console.log(text)}
+        <InputThemed
+          label="Nombre"
+          autoCapitalize="words"
+          value={inputs.name}
+          updateText={(text, disabled) => {
+            setInputs((prev) => ({
+              ...prev,
+              name: text,
+            }));
+            setValidForm((prev) => ({ ...prev, name: disabled }));
+          }}
         />
+        <InputThemed
+          label="Apellido"
+          autoCapitalize="words"
+          value={inputs.lastName}
+          updateText={(text, disabled) => {
+            setInputs((prev) => ({
+              ...prev,
+              lastName: text,
+            }));
+            setValidForm((prev) => ({ ...prev, lastName: disabled }));
+          }}
+        />
+        <InputThemed
+          label="Celular"
+          autoCapitalize="words"
+          value={inputs.phone}
+          inputMode="numeric"
+          updateText={(text, disabled) => {
+            setInputs((prev) => ({
+              ...prev,
+              phone: text,
+            }));
+            setValidForm((prev) => ({ ...prev, phone: disabled }));
+          }}
+        />
+        <Pressable
+          disabled={!isValid}
+          onPress={hanldeUpdate}
+          className={`p-4 rounded-xl my-6 active:bg-button/60 ${isValid ? "bg-button" : "bg-gray-300"}`}
+        >
+          {loading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text className="text-xl text-white font-semibold text-center">
+              Actualizar información
+            </Text>
+          )}
+        </Pressable>
       </View>
-    </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 

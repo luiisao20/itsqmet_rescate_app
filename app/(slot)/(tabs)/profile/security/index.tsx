@@ -1,23 +1,18 @@
 import { View, Text, Pressable, ScrollView } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ActivityIndicator, TextInput } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
 import { IconGo } from "@/components/ui/Icons";
 import { ModalCard } from "@/components/Modal";
 import InputThemed from "@/components/ui/InputThemed";
-import { User } from "firebase/auth";
 import { useAuthStore } from "@/components/store/useAuth";
 import { changePassword } from "@/utils/auth";
-
-interface Card {
-  number: string;
-  type: string;
-  month: number;
-  year: number;
-}
+import { CardDB } from "@/infraestructure/database/tables";
+import { getCards } from "@/utils/database";
+import { useCustomerStore } from "@/components/store/useDb";
 
 const SecurityProfile = () => {
-  const user: User | null = useAuthStore((state) => state.user);
+  const { user } = useAuthStore();
   const [loading, setIsLoading] = useState<boolean>(false);
   const [update, setUpdate] = useState<{
     oldPassword: string;
@@ -38,14 +33,10 @@ const SecurityProfile = () => {
     seeOld: true,
     seeNew: true,
   });
-
-  const info: Card = {
-    number: "7654",
-    month: 12,
-    year: 29,
-    type: "Visa",
-  };
   const [validForm, setIsValidForm] = useState<boolean>(false);
+  const [customerCards, setCustomerCards] = useState<CardDB[] | null>();
+  const { customer } = useCustomerStore();
+  const [idCardToUpdate, setIdCardToUpdate] = useState<string | null>();
 
   const [modalProps, setModalProps] = useState<{
     label: string;
@@ -57,16 +48,26 @@ const SecurityProfile = () => {
     showDelete: true,
   });
 
-  const handleUpdate = async() => {
-    setIsLoading(true);
-    try {
-      await changePassword(user, update.oldPassword, update.newPassword);
-      alert('¡La contraseña ha sido cambiada con éxito!')
-    } catch (error) {
-      if (error instanceof Error) alert(error.message);
+  const handleUpdate = async () => {
+    if (user) {
+      setIsLoading(true);
+      try {
+        await changePassword(user, update.oldPassword, update.newPassword);
+        alert("¡La contraseña ha sido cambiada con éxito!");
+      } catch (error) {
+        if (error instanceof Error) alert(error.message);
+      }
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
+
+  useEffect(() => {
+    getCards(customer?.id!)
+      .then((cards) => setCustomerCards(cards))
+      .catch((error) => console.log(error))
+      .finally(() => {
+      });
+  }, []);
 
   return (
     <ScrollView className="px-6 my-4">
@@ -128,14 +129,14 @@ const SecurityProfile = () => {
         />
         <Pressable
           disabled={!validForm}
-          onPress={() =>handleUpdate()}
+          onPress={() => handleUpdate()}
           className={`py-4 rounded-xl my-4 active:bg-button/60 ${validForm ? "bg-button" : "bg-gray-300"}`}
         >
           {loading ? (
             <ActivityIndicator color="white" />
           ) : (
             <Text className="text-white text-center text-xl font-semibold">
-              Registrarse
+              Actualizar contraseña
             </Text>
           )}
         </Pressable>
@@ -144,23 +145,29 @@ const SecurityProfile = () => {
         <Text className="text-xl text-center text-color font-normal">
           Administrar tarjetas
         </Text>
-        <Pressable
-          onPress={() =>
-            setModalProps((prev) => ({
-              ...prev,
-              isOpen: true,
-            }))
-          }
-          className="py-4 flex flex-row items-center justify-between border-b-2 border-color active:bg-gray-200"
-        >
-          <View>
-            <Text className="font-semibold text-xl text-color">
-              Visa ****{info.number.slice(-4)}
-            </Text>
-            <Text className="font-normal text-lg text-color">Activa</Text>
-          </View>
-          <IconGo size={20} />
-        </Pressable>
+        {customerCards?.map((item, index) => (
+          <Pressable
+            key={index}
+            onPress={() => {
+              setIdCardToUpdate(item.id);
+              setModalProps((prev) => ({
+                ...prev,
+                isOpen: true,
+              }));
+            }}
+            className="py-4 flex flex-row items-center justify-between border-b-2 border-color active:bg-gray-200"
+          >
+            <View>
+              <Text className="font-semibold text-xl text-color">
+                {item.type} ****{item.number}
+              </Text>
+              <Text className="font-normal text-lg text-color">
+                Activa {item.month} / {item.year}
+              </Text>
+            </View>
+            <IconGo size={20} />
+          </Pressable>
+        ))}
         <Pressable
           onPress={() =>
             setModalProps((prev) => ({
@@ -177,10 +184,14 @@ const SecurityProfile = () => {
         </Pressable>
       </View>
       <ModalCard
+        idCurrentCard={idCardToUpdate}
         isOpen={modalProps.isOpen}
         showDelete={modalProps.showDelete}
         onClose={() => setModalProps((prev) => ({ ...prev, isOpen: false }))}
-        onSendData={(text) => console.log(text)}
+        onUpdateData={async () => {
+          const cards: CardDB[] | null = await getCards(customer?.id);
+          setCustomerCards(cards);
+        }}
       />
     </ScrollView>
   );

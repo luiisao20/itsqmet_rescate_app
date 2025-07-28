@@ -8,6 +8,7 @@ const IndexScreen = () => {
   if (isLoading) return <ActivityIndicator size={60} />
 
   return user ? <Redirect href={'/(slot)/(tabs)'} /> : <Redirect href={"/login"} />;
+  // return <Redirect href={'/admin'} />
 };
 
 export default IndexScreen;

@@ -9,24 +9,12 @@ const PacksTab = () => {
 
   const packViews: PackView[] = [
     {
-      key: "today",
-      subtitle: "Los paquetes de hoy",
-    },
-    {
-      key: "missed",
-      subtitle: "Paquetes ya agotados",
-    },
-    {
       key: "favorite",
       subtitle: "Tus paquetes favoritos",
     },
     {
       key: "popular",
       subtitle: "Los más populares",
-    },
-    {
-      key: "nearBy",
-      subtitle: "Cercanos a ti",
     },
   ];
 

@@ -1,11 +1,11 @@
 import { Colors } from "@/constants/Colors";
-import { Pack } from "@/infraestructure/interfaces/PackInterface";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useState } from "react";
 import { Pressable, PressableProps, Text, View } from "react-native";
 import {
   IconAdd,
+  IconHeartFilled,
   IconHeartOut,
   IconMinus,
   IconPlus,
@@ -16,9 +16,15 @@ import { ActivityIndicator } from "react-native-paper";
 import { ModalInfo } from "./Modal";
 import { router } from "expo-router";
 import LogoPack from "./ui/LogoPack";
+import {
+  CartItem,
+  useCartStore,
+  useFavStore,
+  usePacksStore,
+} from "./store/usePacksStore";
 
 interface Props extends PressableProps {
-  info: Pack;
+  info: CartItem;
   home?: boolean;
   className?: string;
 }
@@ -33,8 +39,10 @@ export interface ModalProps {
 const PackCard = ({ info, home = true, className = "", ...rest }: Props) => {
   const [backgroundLoaded, setBackgroundLoaded] = useState(false);
 
-  const [quantity, setQuantity] = useState<number>(info.quantity || 0);
   const [enabled, setEnabled] = useState<boolean>(true);
+  const { addToCart, decreaseQuantity } = useCartStore();
+  const { addToFavorites, removeFromFavorites, getIsFavorite } = useFavStore();
+  const { setSelectedPack } = usePacksStore();
 
   const [modalProps, setModalProps] = useState<ModalProps>({
     product: "",
@@ -53,33 +61,38 @@ const PackCard = ({ info, home = true, className = "", ...rest }: Props) => {
     }));
   }, []);
 
-  // Setea la cantidad si se encuentra en el carrito
-  useEffect(() => {
-    setQuantity(info.quantity || 0);
-  }, [info.quantity]);
+  const handleFavorite = () => {
+    const isFavorite = getIsFavorite(info.id!);
 
-  // Funciones para cuando el pack esté en el carrito
-  const increment = () => {
-    setQuantity((prev) => prev + 1);
-  };
-
-  const minus = () => {
-    if (quantity > 1) {
-      setQuantity((prev) => prev - 1);
-    } else {
+    if (isFavorite) {
+      removeFromFavorites(info.id!);
       setModalProps((prev) => ({
         ...prev,
         isOpen: true,
-        message: "será eliminado del carrito",
-        cart: true,
+        message: "ha sido eliminado de favoritos",
       }));
+      return;
     }
+
+    addToFavorites(info);
+    setModalProps((prev) => ({
+      ...prev,
+      isOpen: true,
+      message: "ha sido añadido a favoritos",
+    }));
   };
 
   /* TODO: undone de modal, usando useContext, tanto el 
   de index, packs y cart es el mismo, solo hay que 
   diferenciar el undone de los favoritos
   */
+  const handleGoPack = () => {
+    setSelectedPack(info.id!);
+    router.push({
+      pathname: "/(slot)/(packs)/details/[id]",
+      params: { id: info.id! },
+    });
+  };
 
   return (
     <View
@@ -117,7 +130,7 @@ const PackCard = ({ info, home = true, className = "", ...rest }: Props) => {
           />
         )}
         <Image
-          source={info.background}
+          source={{ uri: info.restaurant?.background! }}
           style={{
             height: 180,
             width: "100%",
@@ -133,7 +146,12 @@ const PackCard = ({ info, home = true, className = "", ...rest }: Props) => {
           onLoadStart={() => setBackgroundLoaded(false)}
           placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
         />
-        {backgroundLoaded && <LogoPack route={info.logo} title={info.title} />}
+        {backgroundLoaded && (
+          <LogoPack
+            route={info.restaurant?.logo!}
+            title={info.restaurant?.name!}
+          />
+        )}
         {backgroundLoaded && (
           <>
             <View
@@ -151,28 +169,27 @@ const PackCard = ({ info, home = true, className = "", ...rest }: Props) => {
               {home ? (
                 <View className="flex gap-2">
                   <Pressable
-                    onPress={() =>
-                      setModalProps((prev) => ({
-                        ...prev,
-                        isOpen: true,
-                        message: "ha sido añadido a favoritos",
-                      }))
-                    }
+                    onPress={handleFavorite}
                     {...rest}
                     className="bg-white p-2 rounded-full active:scale-125 z-20"
                   >
-                    <IconHeartOut size={18} />
+                    {getIsFavorite(info.id!) ? (
+                      <IconHeartFilled size={18} color={Colors.color} />
+                    ) : (
+                      <IconHeartOut size={18} />
+                    )}
                   </Pressable>
                   {enabled && (
                     <Pressable
                       {...rest}
-                      onPress={() =>
+                      onPress={() => {
+                        addToCart(info);
                         setModalProps((prev) => ({
                           ...prev,
                           isOpen: true,
                           message: "ha sido reservado en el carrito",
-                        }))
-                      }
+                        }));
+                      }}
                       className="bg-white p-2 rounded-full active:scale-125 z-20"
                     >
                       <IconAdd size={18} />
@@ -183,17 +200,21 @@ const PackCard = ({ info, home = true, className = "", ...rest }: Props) => {
                 <View className="flex flex-row items-center z-20 gap-2 justify-center bg-white rounded-full p-1">
                   <Pressable
                     {...rest}
-                    onPress={() => minus()}
+                    onPress={() => decreaseQuantity(info.id!)}
                     className="active:scale-125"
                   >
-                    {quantity > 1 ? <IconMinus /> : <IconTrash size={24} />}
+                    {info.quantity! > 1 ? (
+                      <IconMinus />
+                    ) : (
+                      <IconTrash size={24} />
+                    )}
                   </Pressable>
                   <Text className="text-center font-semibold text-lg">
-                    {quantity}
+                    {info.quantity}
                   </Text>
                   <Pressable
                     {...rest}
-                    onPress={() => increment()}
+                    onPress={() => addToCart(info)}
                     className="active:scale-125"
                   >
                     <IconPlus />
@@ -204,18 +225,10 @@ const PackCard = ({ info, home = true, className = "", ...rest }: Props) => {
           </>
         )}
       </View>
-      <Pressable
-        onLongPress={() =>
-          router.push({
-            pathname: "/(slot)/(packs)/details/[id]",
-            params: { id: info.title },
-          })
-        }
-        className="p-4 active:opacity-45"
-      >
-        <View className="flex flex-row items-end justify-between gap-4">
-          <Text className="text-lg font-semibold text-color">
-            Paquete Sorpresa
+      <Pressable onLongPress={handleGoPack} className="p-4 active:opacity-45">
+        <View className="flex flex-row items-end justify-between gap-4 mx-2">
+          <Text className="text-lg font-semibold text-color w-1/2 text-wrap">
+            {info.title}
           </Text>
           <Text className="text-xs font-light text-wrap w-1/2 text-right">
             Mantén presionado para ver detalles
@@ -249,7 +262,6 @@ const PackCard = ({ info, home = true, className = "", ...rest }: Props) => {
         message={modalProps.message}
         cart={modalProps.cart}
         onClose={() => setModalProps((prev) => ({ ...prev, isOpen: false }))}
-        onUnDone={() => console.log("Por implementar deshacer")}
         isOpen={modalProps.isOpen}
       />
     </View>

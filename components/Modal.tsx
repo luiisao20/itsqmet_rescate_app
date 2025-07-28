@@ -1,13 +1,23 @@
 import { useEffect, useState } from "react";
 import { View, Modal, ModalProps, Text, Pressable } from "react-native";
 import { IconClose, IconLike } from "./ui/Icons";
-import { Portal, TextInput } from "react-native-paper";
+import { ActivityIndicator, Portal, TextInput } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
 import { Time } from "@/app/(slot)/(cart)/pay";
 import { Selection } from "./Selection";
 import InputThemed from "./ui/InputThemed";
+import { useCardStore, useCustomerStore } from "./store/useDb";
+import { AddressDB, CardDB } from "@/infraestructure/database/tables";
+import {
+  deleteCard,
+  saveCard,
+  saveCustomerAddress,
+  udpateCard,
+} from "@/utils/database";
+import { useAddressStore } from "./store/useAddressStore";
+import { router } from "expo-router";
 
-export interface Card {
+export interface CardInput {
   number: string;
   date: string;
   cvv: string;
@@ -19,19 +29,22 @@ export interface InputProps extends ModalProps {
   label?: string;
   inputMode?: "decimal" | "email" | "numeric" | "text";
   textValue?: string;
-  infoCard?: Card;
+  infoCard?: CardInput;
   infoLocation?: {
     alias: string;
     description: string;
+    latitude: number | null;
+    longitude: number | null;
   };
   showDelete?: boolean;
   message?: string;
   labelButton?: string;
+  idCurrentCard?: string | null;
 
   onClose: () => void;
   onSendData?: (text: string) => void;
   onDeleteData?: (id: string) => void;
-  onUpdateData?: (id: string) => void;
+  onUpdateData?: () => void;
   onUpdateLocation?: () => void;
 }
 
@@ -98,18 +111,22 @@ export const ModalCard = ({
   isOpen,
   inputMode = "numeric",
   showDelete = true,
+  idCurrentCard = "",
 
   onClose,
   onUpdateData = () => console.log("no implementado"),
   onDeleteData = () => console.log("no implementado"),
   ...rest
 }: InputProps) => {
-  const [card, setCard] = useState<Card>({
+  const [card, setCard] = useState<CardInput>({
     number: "",
     date: "",
     cvv: "",
     type: "",
   });
+  const { customer } = useCustomerStore();
+  const [loading, setIsLoading] = useState<boolean>(false);
+  const [deleteLoading, setIsDeleteLoading] = useState<boolean>(false);
 
   const handleChange = (text: string) => {
     const cleaned = text.replace(/[^0-9]/g, "");
@@ -126,6 +143,44 @@ export const ModalCard = ({
     if (/^3[47]/.test(number)) return "American Express";
     if (/^6(?:011|5)/.test(number)) return "Discover";
     return "Otra";
+  };
+
+  const handleCard = async () => {
+    setIsLoading(true);
+    const cardDb: CardDB = {
+      number: card.number.slice(-4),
+      month: parseInt(card.date.split("/")[0]),
+      year: parseInt(card.date.split("/")[1]),
+      type: card.type,
+      idCustomer: customer?.id,
+    };
+    await saveCard(cardDb);
+    setIsLoading(false);
+    onUpdateData();
+    onClose();
+  };
+
+  const handleUpdate = async () => {
+    setIsLoading(true);
+    const cardDb: CardDB = {
+      number: card.number.slice(-4),
+      month: parseInt(card.date.split("/")[0]),
+      year: parseInt(card.date.split("/")[1]),
+      type: card.type,
+      idCustomer: customer?.id,
+    };
+    await udpateCard(idCurrentCard, cardDb);
+    setIsLoading(false);
+    onUpdateData();
+    onClose();
+  };
+
+  const handleDelete = async () => {
+    setIsDeleteLoading(true);
+    await deleteCard(idCurrentCard);
+    setIsDeleteLoading(false);
+    onUpdateData();
+    onClose();
   };
 
   return (
@@ -161,10 +216,10 @@ export const ModalCard = ({
               activeUnderlineColor={Colors.button}
               value={card.number}
               onChangeText={(text) => {
-                console.log(getCardBrand(text));
                 setCard((prev) => ({
                   ...prev,
                   number: text,
+                  type: getCardBrand(text),
                 }));
               }}
             />
@@ -205,20 +260,31 @@ export const ModalCard = ({
             {showDelete && (
               <Pressable
                 className="bg-danger rounded-lg px-4 mt-4 active:bg-danger/60"
-                onPress={() => onDeleteData("1")}
+                onPress={handleDelete}
               >
-                <Text className="text-white py-3 text-center text-base font-bold">
-                  Eliminar
-                </Text>
+                {deleteLoading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text className="text-white py-3 text-center text-base font-bold">
+                    Eliminar
+                  </Text>
+                )}
               </Pressable>
             )}
             <Pressable
               className="bg-button rounded-lg px-4 mt-4 active:bg-button/60"
-              onPress={() => onUpdateData("1")}
+              onPress={() => {
+                if (showDelete) handleUpdate();
+                else handleCard();
+              }}
             >
-              <Text className="text-white py-3 text-center text-base font-bold">
-                Guardar
-              </Text>
+              {loading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text className="text-white py-3 text-center text-base font-bold">
+                  Guardar
+                </Text>
+              )}
             </Pressable>
           </View>
         </View>
@@ -268,9 +334,6 @@ export const ModalInfo = ({
             <Text className="text-xl text-color text-center">
               El paquete
               <Text className="font-bold"> {product} </Text>
-              {/* {cart
-                ? "será eliminado del carrito"
-                : "ha sido reservado en el carrito"} */}
               {message}
             </Text>
             <IconLike color={Colors.color} size={50} className="my-4" />
@@ -294,6 +357,8 @@ export const ModalLocation = ({
   infoLocation = {
     alias: "",
     description: "",
+    latitude: null,
+    longitude: null,
   },
 
   onClose,
@@ -304,11 +369,38 @@ export const ModalLocation = ({
     alias: string;
     description: string;
   }>({ alias: "", description: "" });
+  const { customer } = useCustomerStore();
+  const [loading, setLoading] = useState<boolean>(false);
+  const [success, setSuccess] = useState<boolean>(false);
+  const { fetchAddresses } = useAddressStore();
 
   useEffect(() => {
     location.alias = infoLocation.alias;
     location.description = infoLocation.description;
   }, [infoLocation]);
+
+  const handleAddress = async () => {
+    setLoading(true);
+
+    if (infoLocation.latitude && infoLocation.longitude && customer?.id) {
+      try {
+        const newAddress: AddressDB = {
+          alias: location.alias,
+          description: location.description,
+          latitude: infoLocation.latitude,
+          longitude: infoLocation.longitude,
+        };
+        await saveCustomerAddress(newAddress, customer.id);
+        setSuccess(true);
+        fetchAddresses(customer.id);
+        router.dismiss();
+      } catch (error) {
+        console.log(error);
+        alert(`Ha ocurrido un error: ${error}`);
+      }
+    }
+    setLoading(false);
+  };
 
   return (
     <Modal
@@ -339,7 +431,7 @@ export const ModalLocation = ({
               textColor={Colors.color}
               underlineColor={Colors.color}
               activeUnderlineColor={Colors.button}
-              value={infoLocation.alias}
+              value={location.alias}
               onChangeText={(text) =>
                 setLocation((prev) => ({
                   ...prev,
@@ -356,7 +448,7 @@ export const ModalLocation = ({
               textColor={Colors.color}
               underlineColor={Colors.color}
               activeUnderlineColor={Colors.button}
-              value={infoLocation.description}
+              value={location.description}
               onChangeText={(text) =>
                 setLocation((prev) => ({
                   ...prev,
@@ -365,14 +457,23 @@ export const ModalLocation = ({
               }
             />
           </View>
+          {success && (
+            <Text className="mt-4 text-success">
+              ¡La dirección se ha guardado con éxito!
+            </Text>
+          )}
           <View className="flex flex-row justify-start gap-4">
             <Pressable
               className="bg-button rounded-lg px-4 mt-4 active:bg-button/60"
-              onPress={() => onUpdateLocation()}
+              onPress={handleAddress}
             >
-              <Text className="text-white py-3 text-center text-base font-bold">
-                Actualizar
-              </Text>
+              {loading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text className="text-white py-3 text-center text-base font-bold">
+                  Actualizar
+                </Text>
+              )}
             </Pressable>
           </View>
         </View>
@@ -390,19 +491,7 @@ export const ModalPayments = ({
   ...rest
 }: InfoProps) => {
   const [selected, setSelected] = useState<string>("");
-
-  const options: Time[] = [
-    {
-      id: "4",
-      label: "Visa",
-      description: "Luis Bravo",
-    },
-    {
-      id: "5",
-      label: "Efectivo",
-      description: "",
-    },
-  ];
+  const { cards, setSelectedCard } = useCardStore();
 
   return (
     <Modal
@@ -424,20 +513,29 @@ export const ModalPayments = ({
             Escoge un método de pago
           </Text>
           <View className="flex gap-4 w-full my-4">
-            {options.map((item, index) => (
+            {cards.map((item, index) => (
               <Selection
                 key={index}
-                id={item.id}
-                label={item.label}
-                description={item.description}
-                selected={selected}
-                setSelected={() => setSelected(item.id)}
+                id="4"
+                label={item.type}
+                description={`${item.number} ${item.month} / ${item.year}`}
+                setSelected={() => {
+                  setSelectedCard(item.id!)
+                }}
               />
             ))}
+            <Selection
+              id="5"
+              label="Efectivo"
+              setSelected={() => {
+                setSelected('5')
+                setSelectedCard("5")
+              }}
+            />
           </View>
           <Pressable
             onPress={() => onSelect(selected)}
-            className="bg-success p-4 rounded-xl"
+            className="bg-success p-4 rounded-xl active:bg-success/40"
           >
             <Text className="text-white text-xl shadow-black">Seleccionar</Text>
           </Pressable>

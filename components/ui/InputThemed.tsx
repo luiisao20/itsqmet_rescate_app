@@ -83,6 +83,16 @@ const InputThemed = ({
         } else setError((prev) => ({ ...prev, show: false }));
         updateText(text, passwordRegex.test(text));
         break;
+      case "Celular":
+        if (text.length < 10) {
+          setError({
+            show: true,
+            message:
+              "El número celular debe tener mínimo 10 dígitos",
+          });
+        } else setError((prev) => ({ ...prev, show: false }));
+        updateText(text, !(text.length < 10));
+        break;
       case "Confirmar contraseña":
         updateText(text, false);
         break;
