@@ -2,7 +2,6 @@ import { View } from "react-native";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { Colors } from "@/constants/Colors";
-import { getPacks } from "@/hooks/getPacks";
 import { FlatList } from "react-native-gesture-handler";
 import PackCard from "@/components/PackCard";
 import { PackageDB } from "@/infraestructure/database/tables";
