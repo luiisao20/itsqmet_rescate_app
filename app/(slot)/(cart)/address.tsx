@@ -48,7 +48,7 @@ const AdressScreen = () => {
               </Pressable>
               <Pressable
                 onPress={() => {
-                  setSelectedAddress(item.id);
+                  setSelectedAddress(item.id!);
                   router.replace("/(slot)/(cart)/pay");
                 }}
                 className="active:opacity-60"

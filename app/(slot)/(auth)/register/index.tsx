@@ -7,6 +7,8 @@ import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { registerUser } from "@/utils/auth";
 import InputThemed from "@/components/ui/InputThemed";
+import {saveCustomer} from "@/utils/database";
+import {CustomerDB} from "@/infraestructure/database/tables";
 
 interface Login {
   name: string;
@@ -50,16 +52,23 @@ const RegisterScreen = () => {
   const [loading, setIsLoading] = useState<boolean>(false);
 
   const register = async () => {
-    if (validForm.confirmPassword) {
+    const customer: CustomerDB = {
+      name: login.name,
+      lastName: login.lastName,
+      email: login.email
+    }
+    if (!validForm.confirmPassword) {
       setError({
         show: true,
         message: "Las contraseñas no coinciden",
       });
       return;
     }
+    
     setIsLoading(true);
     try {
       const res = await registerUser(login.email, login.password);
+      const custRes = await saveCustomer(customer);
       router.push("/login");
     } catch (error) {
       if (error instanceof Error) alert(error.message);

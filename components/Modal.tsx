@@ -381,6 +381,8 @@ export const ModalLocation = ({
 
   const handleAddress = async () => {
     setLoading(true);
+    console.log(customer);
+    
 
     if (infoLocation.latitude && infoLocation.longitude && customer?.id) {
       try {

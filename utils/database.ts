@@ -20,7 +20,6 @@ import {
   orderBy,
   Query,
   query,
-  QueryDocumentSnapshot,
   QuerySnapshot,
   setDoc,
   updateDoc,
@@ -222,11 +221,14 @@ export const savePackages = (packages: PackageDB[]) => {
   }
 };
 
-export const getPackages = async (quantity: number, order: string): Promise<PackageDB[] | null> => {
+export const getPackages = async (
+  quantity: number,
+  order: string
+): Promise<PackageDB[] | null> => {
   try {
     const q: Query = query(
       collection(db, "packages"),
-      orderBy(order, 'desc'),
+      orderBy(order, "desc"),
       limit(quantity)
     );
 
@@ -267,5 +269,16 @@ export const getPackages = async (quantity: number, order: string): Promise<Pack
     return enrichedPackages;
   } catch (error) {
     throw error;
+  }
+};
+
+export const saveCustomer = async (customer: CustomerDB) => {
+  try {
+    const docRef = await addDoc(collection(db, "customers"), customer);
+    console.log("Cliente guardado con ID:", docRef.id);
+    return docRef.id;
+  } catch (e) {
+    console.error("Error al guardar el cliente: ", e);
+    throw e;
   }
 };

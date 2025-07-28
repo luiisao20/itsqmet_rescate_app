@@ -16,7 +16,7 @@ import { useCustomerStore } from "@/components/store/useDb";
 export default function RootLayout() {
   const { user, setLoading, setUser } = useAuthStore();
 
-  const { fetchCustomer } = useCustomerStore();
+  const { customer, fetchCustomer } = useCustomerStore();
 
   useEffect(() => {
     const unsuscribe = onAuthStateChanged(auth, (user) => {
@@ -29,6 +29,8 @@ export default function RootLayout() {
   useEffect(() => {
     if (user?.email) {
       fetchCustomer(user.email);
+      console.log(customer);
+      
     }
   }, [user?.email]);
 
