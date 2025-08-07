@@ -3,17 +3,9 @@ import { View, Modal, ModalProps, Text, Pressable } from "react-native";
 import { IconClose, IconLike } from "./ui/Icons";
 import { ActivityIndicator, Portal, TextInput } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
-import { Time } from "@/app/(slot)/(cart)/pay";
 import { Selection } from "./Selection";
 import InputThemed from "./ui/InputThemed";
-import { useCardStore, useCustomerStore } from "./store/useDb";
 import { AddressDB, CardDB } from "@/infraestructure/database/tables";
-import {
-  deleteCard,
-  saveCard,
-  saveCustomerAddress,
-  udpateCard,
-} from "@/utils/database";
 import { useAddressStore } from "./store/useAddressStore";
 import { router } from "expo-router";
 
@@ -124,7 +116,6 @@ export const ModalCard = ({
     cvv: "",
     type: "",
   });
-  const { customer } = useCustomerStore();
   const [loading, setIsLoading] = useState<boolean>(false);
   const [deleteLoading, setIsDeleteLoading] = useState<boolean>(false);
 
@@ -152,9 +143,7 @@ export const ModalCard = ({
       month: parseInt(card.date.split("/")[0]),
       year: parseInt(card.date.split("/")[1]),
       type: card.type,
-      idCustomer: customer?.id,
     };
-    await saveCard(cardDb);
     setIsLoading(false);
     onUpdateData();
     onClose();
@@ -167,9 +156,7 @@ export const ModalCard = ({
       month: parseInt(card.date.split("/")[0]),
       year: parseInt(card.date.split("/")[1]),
       type: card.type,
-      idCustomer: customer?.id,
     };
-    await udpateCard(idCurrentCard, cardDb);
     setIsLoading(false);
     onUpdateData();
     onClose();
@@ -177,7 +164,6 @@ export const ModalCard = ({
 
   const handleDelete = async () => {
     setIsDeleteLoading(true);
-    await deleteCard(idCurrentCard);
     setIsDeleteLoading(false);
     onUpdateData();
     onClose();
@@ -369,7 +355,6 @@ export const ModalLocation = ({
     alias: string;
     description: string;
   }>({ alias: "", description: "" });
-  const { customer } = useCustomerStore();
   const [loading, setLoading] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
   const { fetchAddresses } = useAddressStore();
@@ -381,10 +366,8 @@ export const ModalLocation = ({
 
   const handleAddress = async () => {
     setLoading(true);
-    console.log(customer);
-    
 
-    if (infoLocation.latitude && infoLocation.longitude && customer?.id) {
+    if (infoLocation.latitude && infoLocation.longitude) {
       try {
         const newAddress: AddressDB = {
           alias: location.alias,
@@ -392,9 +375,7 @@ export const ModalLocation = ({
           latitude: infoLocation.latitude,
           longitude: infoLocation.longitude,
         };
-        await saveCustomerAddress(newAddress, customer.id);
         setSuccess(true);
-        fetchAddresses(customer.id);
         router.dismiss();
       } catch (error) {
         console.log(error);
@@ -493,7 +474,6 @@ export const ModalPayments = ({
   ...rest
 }: InfoProps) => {
   const [selected, setSelected] = useState<string>("");
-  const { cards, setSelectedCard } = useCardStore();
 
   return (
     <Modal
@@ -515,7 +495,7 @@ export const ModalPayments = ({
             Escoge un método de pago
           </Text>
           <View className="flex gap-4 w-full my-4">
-            {cards.map((item, index) => (
+            {/* {cards.map((item, index) => (
               <Selection
                 key={index}
                 id="4"
@@ -525,13 +505,12 @@ export const ModalPayments = ({
                   setSelectedCard(item.id!)
                 }}
               />
-            ))}
+            ))} */}
             <Selection
               id="5"
               label="Efectivo"
               setSelected={() => {
                 setSelected('5')
-                setSelectedCard("5")
               }}
             />
           </View>

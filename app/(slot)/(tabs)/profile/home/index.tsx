@@ -5,20 +5,19 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { router } from "expo-router";
 
 import { Colors } from "@/constants/Colors";
-import { logout } from "@/utils/auth";
 
 import HomeCards from "@/components/HomeCards";
 import { IconProfileHome } from "@/components/ui/Icons";
 import { ProfileTabParamList } from "../_layout";
 import { ActivityIndicator } from "react-native-paper";
-import { useCustomerStore } from "@/components/store/useDb";
+import { useAuthStore } from "@/presentation/auth/store/useAuthStore";
 
 type NavigationProp = NativeStackNavigationProp<ProfileTabParamList>;
 
 const InfoProfile = () => {
   const navigation = useNavigation<NavigationProp>();
   const [loading, setIsLoading] = useState<boolean>(false);
-  const { customer } = useCustomerStore();
+  const { logout } = useAuthStore();
 
   const handleLogout = async () => {
     setIsLoading(true);
@@ -34,10 +33,10 @@ const InfoProfile = () => {
         color={Colors.color}
         className="text-center"
       />
-      <Text className="text-2xl text-color font-bold text-center">{customer?.name}</Text>
+      {/* <Text className="text-2xl text-color font-bold text-center">{customer?.name}</Text>
       <Text className="text-xl text-color font-light text-center">
         {customer?.email}
-      </Text>
+      </Text> */}
       <View className="flex flex-row gap-4 my-4 justify-center">
         <HomeCards
           title="Editar información"
@@ -51,7 +50,7 @@ const InfoProfile = () => {
         />
       </View>
       <Pressable
-        onPress={() => handleLogout()}
+        onPress={handleLogout}
         className="bg-button p-4 rounded-xl active:bg-button/60 my-4"
       >
         {loading ? (

@@ -1,14 +1,37 @@
+import { useAuthStore } from "@/presentation/auth/store/useAuthStore";
 import { Redirect } from "expo-router";
-import { useAuthStore } from "@/components/store/useAuth";
-import {ActivityIndicator} from "react-native-paper";
+import { useEffect } from "react";
+import { View } from "react-native";
+import { ActivityIndicator } from "react-native-paper";
 
 const IndexScreen = () => {
-  const { user, isLoading } = useAuthStore();
+  const { status, checkStatus } = useAuthStore();
 
-  if (isLoading) return <ActivityIndicator size={60} />
+  useEffect(() => {
+    checkStatus();
+  }, []);
 
-  return user ? <Redirect href={'/(slot)/(tabs)'} /> : <Redirect href={"/login"} />;
-  // return <Redirect href={'/admin'} />
+  if (status === "checking") {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          marginBottom: 5,
+        }}
+      >
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    // guardar la ruta del usuario
+    return <Redirect href="/login" />;
+  }
+
+  return <Redirect href={"/(slot)/(tabs)"} />;
 };
 
 export default IndexScreen;

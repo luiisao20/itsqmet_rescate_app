@@ -2,12 +2,8 @@ import { Pressable, View, Text, KeyboardAvoidingView } from "react-native";
 import { useEffect, useState } from "react";
 import { IconPencil, IconProfileHome } from "@/components/ui/Icons";
 import { Colors } from "@/constants/Colors";
-import { useCustomerStore } from "@/components/store/useDb";
 import InputThemed from "@/components/ui/InputThemed";
-import { updateCustomer } from "@/utils/database";
-import { useAuthStore } from "@/components/store/useAuth";
 import { ActivityIndicator } from "react-native-paper";
-import {router} from "expo-router";
 
 interface ValidForm {
   name: boolean;
@@ -16,8 +12,6 @@ interface ValidForm {
 }
 
 const ProfileHome = () => {
-  const { customer, fetchCustomer } = useCustomerStore();
-  const { user } = useAuthStore();
   const [inputs, setInputs] = useState({
     name: "",
     lastName: "",
@@ -32,31 +26,12 @@ const ProfileHome = () => {
   const [loading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    if (customer) {
-      setInputs({
-        name: customer.name,
-        lastName: customer.lastName,
-        phone: customer.phone ? customer.phone : "",
-      });
-    }
-  }, []);
-
-  useEffect(() => {
     const allValid = Object.values(validForm).every(Boolean);
     setIsValid(allValid && inputs.phone.length > 0);
   }, [validForm]);
 
   const hanldeUpdate = async () => {
     setIsLoading(true);
-    if (customer?.id && user?.email) {
-      await updateCustomer(
-        inputs.name,
-        inputs.lastName,
-        inputs.phone,
-        customer.id
-      );
-      fetchCustomer(user.email);
-    }
     setIsLoading(false);
   };
 

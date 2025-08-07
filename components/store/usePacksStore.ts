@@ -1,5 +1,4 @@
 import { PackageDB } from "@/infraestructure/database/tables";
-import { getPackages } from "@/utils/database";
 import { create } from "zustand";
 
 interface PacksStore {
@@ -22,13 +21,6 @@ export const usePacksStore = create<PacksStore>()((set, get) => ({
     if (get().packs[category]?.length > 0) return;
     try {
       set({ isLoading: true });
-      const res = await getPackages(quantity, order);
-      set((state) => ({
-        packs: {
-          ...state.packs,
-          [category]: res ?? []
-        }
-      }))
     } catch (error) {
       throw error;
     } finally {

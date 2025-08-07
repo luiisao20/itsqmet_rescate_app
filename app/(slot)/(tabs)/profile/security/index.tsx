@@ -5,14 +5,9 @@ import { Colors } from "@/constants/Colors";
 import { IconGo } from "@/components/ui/Icons";
 import { ModalCard } from "@/components/Modal";
 import InputThemed from "@/components/ui/InputThemed";
-import { useAuthStore } from "@/components/store/useAuth";
-import { changePassword } from "@/utils/auth";
 import { CardDB } from "@/infraestructure/database/tables";
-import { getCards } from "@/utils/database";
-import { useCustomerStore } from "@/components/store/useDb";
 
 const SecurityProfile = () => {
-  const { user } = useAuthStore();
   const [loading, setIsLoading] = useState<boolean>(false);
   const [update, setUpdate] = useState<{
     oldPassword: string;
@@ -35,7 +30,6 @@ const SecurityProfile = () => {
   });
   const [validForm, setIsValidForm] = useState<boolean>(false);
   const [customerCards, setCustomerCards] = useState<CardDB[] | null>();
-  const { customer } = useCustomerStore();
   const [idCardToUpdate, setIdCardToUpdate] = useState<string | null>();
 
   const [modalProps, setModalProps] = useState<{
@@ -49,25 +43,14 @@ const SecurityProfile = () => {
   });
 
   const handleUpdate = async () => {
-    if (user) {
-      setIsLoading(true);
-      try {
-        await changePassword(user, update.oldPassword, update.newPassword);
-        alert("¡La contraseña ha sido cambiada con éxito!");
-      } catch (error) {
-        if (error instanceof Error) alert(error.message);
-      }
-      setIsLoading(false);
+    setIsLoading(true);
+    try {
+      alert("¡La contraseña ha sido cambiada con éxito!");
+    } catch (error) {
+      if (error instanceof Error) alert(error.message);
     }
+    setIsLoading(false);
   };
-
-  useEffect(() => {
-    getCards(customer?.id!)
-      .then((cards) => setCustomerCards(cards))
-      .catch((error) => console.log(error))
-      .finally(() => {
-      });
-  }, []);
 
   return (
     <ScrollView className="px-6 my-4">
@@ -188,10 +171,7 @@ const SecurityProfile = () => {
         isOpen={modalProps.isOpen}
         showDelete={modalProps.showDelete}
         onClose={() => setModalProps((prev) => ({ ...prev, isOpen: false }))}
-        onUpdateData={async () => {
-          const cards: CardDB[] | null = await getCards(customer?.id);
-          setCustomerCards(cards);
-        }}
+        onUpdateData={async () => {}}
       />
     </ScrollView>
   );

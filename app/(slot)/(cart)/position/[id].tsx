@@ -7,7 +7,6 @@ import { Colors } from "@/constants/Colors";
 import { useLocationStore } from "@/components/store/useLocationStore";
 import { ModalLocation } from "@/components/Modal";
 import { useAddressStore } from "@/components/store/useAddressStore";
-import { deleteAddress } from "@/utils/database";
 import { useCustomerStore } from "@/components/store/useDb";
 
 interface ModalProps {
@@ -142,7 +141,6 @@ const EditAdress = () => {
     setIsLoading(true);
 
     try {
-      await deleteAddress(id);
       fetchAddresses(customer?.id!);
       router.dismiss();
     } catch (error) {

@@ -5,10 +5,9 @@ import { ActivityIndicator, TextInput } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { registerUser } from "@/utils/auth";
 import InputThemed from "@/components/ui/InputThemed";
-import {saveCustomer} from "@/utils/database";
-import {CustomerDB} from "@/infraestructure/database/tables";
+import { CustomerDB } from "@/infraestructure/database/tables";
+import { useAuthStore } from "@/presentation/auth/store/useAuthStore";
 
 interface Login {
   name: string;
@@ -31,7 +30,7 @@ interface ValidForm {
 }
 
 const RegisterScreen = () => {
-  const [login, setLogin] = useState<Login>({
+  const [form, setForm] = useState<Login>({
     name: "",
     lastName: "",
     email: "",
@@ -50,13 +49,9 @@ const RegisterScreen = () => {
     confirmPassword: false,
   });
   const [loading, setIsLoading] = useState<boolean>(false);
+  const { register } = useAuthStore();
 
-  const register = async () => {
-    const customer: CustomerDB = {
-      name: login.name,
-      lastName: login.lastName,
-      email: login.email
-    }
+  const onRegister = async () => {
     if (!validForm.confirmPassword) {
       setError({
         show: true,
@@ -64,15 +59,15 @@ const RegisterScreen = () => {
       });
       return;
     }
-    
+
     setIsLoading(true);
-    try {
-      const res = await registerUser(login.email, login.password);
-      const custRes = await saveCustomer(customer);
-      router.push("/login");
-    } catch (error) {
-      if (error instanceof Error) alert(error.message);
-    }
+    const wasSuccessful = await register(
+      form.email,
+      form.password,
+      form.name,
+      form.lastName
+    );
+    if (wasSuccessful) router.replace("/login");
     setIsLoading(false);
   };
 
@@ -88,9 +83,9 @@ const RegisterScreen = () => {
   }, [validForm]);
 
   useEffect(() => {
-    const equals = login.confirmPassword === login.password;
+    const equals = form.confirmPassword === form.password;
     setValidForm((prev) => ({ ...prev, confirmPassword: equals }));
-  }, [login.password, login.confirmPassword]);
+  }, [form.password, form.confirmPassword]);
 
   return (
     <KeyboardAvoidingView behavior="position">
@@ -114,7 +109,7 @@ const RegisterScreen = () => {
               label="Nombre"
               autoCapitalize="words"
               updateText={(text, disabled) => {
-                setLogin((prev) => ({ ...prev, name: text }));
+                setForm((prev) => ({ ...prev, name: text }));
                 setValidForm((prev) => ({ ...prev, name: disabled }));
               }}
             />
@@ -122,7 +117,7 @@ const RegisterScreen = () => {
               label="Apellido"
               autoCapitalize="words"
               updateText={(text, disabled) => {
-                setLogin((prev) => ({ ...prev, lastName: text }));
+                setForm((prev) => ({ ...prev, lastName: text }));
                 setValidForm((prev) => ({ ...prev, lastName: disabled }));
               }}
             />
@@ -130,7 +125,7 @@ const RegisterScreen = () => {
               label="Correo electrónico"
               autoCapitalize="none"
               updateText={(text, disabled) => {
-                setLogin((prev) => ({ ...prev, email: text }));
+                setForm((prev) => ({ ...prev, email: text }));
                 setValidForm((prev) => ({ ...prev, email: disabled }));
               }}
               right={<TextInput.Icon icon="email" color={Colors.color} />}
@@ -138,9 +133,9 @@ const RegisterScreen = () => {
             <InputThemed
               label="Contraseña"
               autoCapitalize="none"
-              secureTextEntry={login.seePassword}
+              secureTextEntry={form.seePassword}
               updateText={(text, disabled) => {
-                setLogin((prev) => ({
+                setForm((prev) => ({
                   ...prev,
                   password: text,
                 }));
@@ -149,13 +144,13 @@ const RegisterScreen = () => {
               right={
                 <TextInput.Icon
                   onPress={() =>
-                    setLogin((prev) => ({
+                    setForm((prev) => ({
                       ...prev,
                       seePassword: !prev.seePassword,
                       icon: prev.icon === "eye" ? "eye-off" : "eye",
                     }))
                   }
-                  icon={login.icon}
+                  icon={form.icon}
                   color={Colors.color}
                 />
               }
@@ -164,9 +159,9 @@ const RegisterScreen = () => {
               label="Confirmar contraseña"
               autoCapitalize="none"
               id="confirm-password"
-              secureTextEntry={login.seeConfirmPassword}
+              secureTextEntry={form.seeConfirmPassword}
               updateText={(text) =>
-                setLogin((prev) => ({
+                setForm((prev) => ({
                   ...prev,
                   confirmPassword: text,
                 }))
@@ -174,25 +169,27 @@ const RegisterScreen = () => {
               right={
                 <TextInput.Icon
                   onPress={() =>
-                    setLogin((prev) => ({
+                    setForm((prev) => ({
                       ...prev,
                       seeConfirmPassword: !prev.seeConfirmPassword,
                       iconConfirm:
                         prev.iconConfirm === "eye" ? "eye-off" : "eye",
                     }))
                   }
-                  icon={login.iconConfirm}
+                  icon={form.iconConfirm}
                   color={Colors.color}
                 />
               }
             />
-            <Text className="text-danger font-light mt-4 px-2 text-xs">
-              {`Error! ${error.message}`}
-            </Text>
+            {error.show && (
+              <Text className="text-danger font-light mt-4 px-2 text-xs">
+                {`Error! ${error.message}`}
+              </Text>
+            )}
           </View>
           <Pressable
             disabled={!isFormValid}
-            onPress={() => register()}
+            onPress={() => onRegister()}
             className={`py-4 rounded-xl my-4 active:bg-button/60 ${isFormValid ? "bg-button" : "bg-gray-300"}`}
           >
             {loading ? (
