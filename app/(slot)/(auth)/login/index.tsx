@@ -5,7 +5,6 @@ import { router } from "expo-router";
 import { ActivityIndicator, TextInput } from "react-native-paper";
 import { Image } from "expo-image";
 import { Colors } from "@/constants/Colors";
-import { ModalInput } from "@/components/Modal";
 import { useAuthStore } from "@/presentation/auth/store/useAuthStore";
 
 interface Login {
@@ -131,14 +130,6 @@ const LoginScreen = () => {
           </Text>
         </Pressable>
       </View>
-      <ModalInput
-        isOpen={open}
-        inputMode="email"
-        label="Correo electrónico"
-        labelButton="Enviar"
-        message="Envía un correo de reestablecimiento de contraseña"
-        onClose={() => setIsOpen(false)}
-      />
     </KeyboardAvoidingView>
   );
 };

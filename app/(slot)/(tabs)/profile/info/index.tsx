@@ -1,40 +1,22 @@
 import { Pressable, View, Text, KeyboardAvoidingView } from "react-native";
-import { useEffect, useState } from "react";
+import { Formik } from "formik";
+import { ActivityIndicator } from "react-native-paper";
+
 import { IconPencil, IconProfileHome } from "@/components/ui/Icons";
 import { Colors } from "@/constants/Colors";
 import InputThemed from "@/components/ui/InputThemed";
-import { ActivityIndicator } from "react-native-paper";
-
-interface ValidForm {
-  name: boolean;
-  lastName: boolean;
-  phone: boolean;
-}
+import { useCustomer } from "@/presentation/customer/useCustomer";
+import { userInfoSchema } from "@/presentation/customer/error/get-error-form";
+import { CustomErrorMessage } from "@/components/CustomErrorMessage";
 
 const ProfileHome = () => {
-  const [inputs, setInputs] = useState({
-    name: "",
-    lastName: "",
-    phone: "",
-  });
-  const [validForm, setValidForm] = useState<ValidForm>({
-    name: true,
-    lastName: true,
-    phone: true,
-  });
-  const [isValid, setIsValid] = useState<boolean>(false);
-  const [loading, setIsLoading] = useState<boolean>(false);
+  const { customerQuery, customerMutation } = useCustomer();
 
-  useEffect(() => {
-    const allValid = Object.values(validForm).every(Boolean);
-    setIsValid(allValid && inputs.phone.length > 0);
-  }, [validForm]);
+  if (!customerQuery.data) {
+    return;
+  }
 
-  const hanldeUpdate = async () => {
-    setIsLoading(true);
-    setIsLoading(false);
-  };
-
+  const customer = customerQuery.data;
   return (
     <KeyboardAvoidingView behavior="padding">
       <View className="px-6 my-4">
@@ -44,56 +26,79 @@ const ProfileHome = () => {
             <IconPencil color="white" />
           </Pressable>
         </View>
-        <InputThemed
-          label="Nombre"
-          autoCapitalize="words"
-          value={inputs.name}
-          updateText={(text, disabled) => {
-            setInputs((prev) => ({
-              ...prev,
-              name: text,
-            }));
-            setValidForm((prev) => ({ ...prev, name: disabled }));
+        <Formik
+          initialValues={customer}
+          onSubmit={async (customerLike, { setSubmitting }) => {
+            await customerMutation.mutateAsync({ ...customerLike });
+            setSubmitting(false);
           }}
-        />
-        <InputThemed
-          label="Apellido"
-          autoCapitalize="words"
-          value={inputs.lastName}
-          updateText={(text, disabled) => {
-            setInputs((prev) => ({
-              ...prev,
-              lastName: text,
-            }));
-            setValidForm((prev) => ({ ...prev, lastName: disabled }));
-          }}
-        />
-        <InputThemed
-          label="Celular"
-          autoCapitalize="words"
-          value={inputs.phone}
-          inputMode="numeric"
-          updateText={(text, disabled) => {
-            setInputs((prev) => ({
-              ...prev,
-              phone: text,
-            }));
-            setValidForm((prev) => ({ ...prev, phone: disabled }));
-          }}
-        />
-        <Pressable
-          disabled={!isValid}
-          onPress={hanldeUpdate}
-          className={`p-4 rounded-xl my-6 active:bg-button/60 ${isValid ? "bg-button" : "bg-gray-300"}`}
+          validationSchema={userInfoSchema}
         >
-          {loading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text className="text-xl text-white font-semibold text-center">
-              Actualizar información
-            </Text>
+          {({
+            values,
+            errors,
+            touched,
+            isValid,
+            isSubmitting,
+
+            handleSubmit,
+            handleChange,
+            handleBlur,
+          }) => (
+            <View>
+              <InputThemed
+                label="Nombre"
+                autoCapitalize="words"
+                value={values.name}
+                updateText={handleChange("name")}
+                onBlur={handleBlur("name")}
+              />
+              <CustomErrorMessage
+                name="name"
+                errors={errors}
+                touched={touched}
+              />
+              <InputThemed
+                label="Apellido"
+                autoCapitalize="words"
+                value={values.last_name}
+                updateText={handleChange("last_name")}
+                onBlur={handleBlur("last_name")}
+              />
+              <CustomErrorMessage
+                name="last_name"
+                errors={errors}
+                touched={touched}
+              />
+              <InputThemed
+                label="Celular"
+                autoCapitalize="words"
+                value={values.cellphone ? values.cellphone : ""}
+                inputMode="numeric"
+                updateText={handleChange("cellphone")}
+                onBlur={handleBlur("cellphone")}
+              />
+              <CustomErrorMessage
+                name="cellphone"
+                errors={errors}
+                touched={touched}
+              />
+              <Pressable
+                disabled={!isValid || isSubmitting}
+                onPress={() => handleSubmit()}
+                className={`p-4 rounded-xl my-6 active:bg-button/60 ${isValid ? "bg-button" : "bg-gray-300"}`}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text className="text-xl text-white font-semibold text-center">
+                    Actualizar información
+                  </Text>
+                )}
+              </Pressable>
+            </View>
           )}
-        </Pressable>
+        </Formik>
       </View>
     </KeyboardAvoidingView>
   );

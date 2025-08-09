@@ -78,3 +78,32 @@ export const registerUser = async (
   }
   return true;
 };
+
+export const updatePassword = async (
+  oldPassword: string,
+  newPassword: string,
+  email: string
+) => {
+  const { error: errorSignIn } = await supabase.auth.signInWithPassword({
+    email,
+    password: oldPassword,
+  });
+
+  if (errorSignIn) {
+    Alert.alert("Error", "La contraseña actual es incorrecta");
+    return null;
+  }
+
+  const { error } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+
+  if (error) {
+    console.log(error);
+    Alert.alert('Error', 'Algo salió mal')
+    return null
+  }
+
+  return true
+
+};

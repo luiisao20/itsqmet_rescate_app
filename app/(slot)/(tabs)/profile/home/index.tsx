@@ -11,6 +11,7 @@ import { IconProfileHome } from "@/components/ui/Icons";
 import { ProfileTabParamList } from "../_layout";
 import { ActivityIndicator } from "react-native-paper";
 import { useAuthStore } from "@/presentation/auth/store/useAuthStore";
+import { useCustomer } from "@/presentation/customer/useCustomer";
 
 type NavigationProp = NativeStackNavigationProp<ProfileTabParamList>;
 
@@ -19,12 +20,24 @@ const InfoProfile = () => {
   const [loading, setIsLoading] = useState<boolean>(false);
   const { logout } = useAuthStore();
 
+  const { customerQuery } = useCustomer();
+
+  if (customerQuery.isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center" }}>
+        <ActivityIndicator color={Colors.button} size={50} />
+      </View>
+    );
+  }
+
   const handleLogout = async () => {
     setIsLoading(true);
     await logout();
     setIsLoading(false);
     router.replace("/login");
   };
+
+  const customer = customerQuery.data!;
 
   return (
     <View className="px-6 my-4">
@@ -33,10 +46,10 @@ const InfoProfile = () => {
         color={Colors.color}
         className="text-center"
       />
-      {/* <Text className="text-2xl text-color font-bold text-center">{customer?.name}</Text>
+      <Text className="text-2xl text-color font-bold text-center">{customer.name}</Text>
       <Text className="text-xl text-color font-light text-center">
-        {customer?.email}
-      </Text> */}
+        {customer.email}
+      </Text>
       <View className="flex flex-row gap-4 my-4 justify-center">
         <HomeCards
           title="Editar información"

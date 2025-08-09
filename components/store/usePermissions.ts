@@ -1,7 +1,7 @@
 import {
   checkLocationPermission,
   requestLocationPermission,
-} from "@/action/permissions/locations";
+} from "@/core/permissions/locations";
 import { PermissionStatus } from "@/infraestructure/interfaces/location";
 import { create } from "zustand";
 

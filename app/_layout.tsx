@@ -8,6 +8,15 @@ import { useEffect } from "react";
 
 import "../global.css";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
 
 export default function RootLayout() {
   useEffect(() => {
@@ -31,12 +40,14 @@ export default function RootLayout() {
   }
 
   return (
-    <PaperProvider>
-      <SafeAreaProvider>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <Slot />
-        </GestureHandlerRootView>
-      </SafeAreaProvider>
-    </PaperProvider>
+    <QueryClientProvider client={queryClient}>
+      <PaperProvider>
+        <SafeAreaProvider>
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <Slot />
+          </GestureHandlerRootView>
+        </SafeAreaProvider>
+      </PaperProvider>
+    </QueryClientProvider>
   );
 }

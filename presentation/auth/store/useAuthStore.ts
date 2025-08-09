@@ -1,6 +1,12 @@
-import { authCheckSession, authLogin, registerUser } from "@/core/auth/actions/authActions";
+import {
+  authCheckSession,
+  authLogin,
+  registerUser,
+  updatePassword,
+} from "@/core/auth/actions/authActions";
 import { SecureStorageAdapter } from "@/helpers/secure-storage.adapter";
 import { Session, User } from "@supabase/supabase-js";
+import { Alert } from "react-native";
 import { create } from "zustand";
 
 export type AuthStatus = "authenticated" | "unauthenticated" | "checking";
@@ -19,6 +25,10 @@ export interface AuthState {
     password: string,
     firstName: string,
     lastName: string
+  ) => Promise<boolean>;
+  changePassword: (
+    oldPassword: string,
+    newPassword: string
   ) => Promise<boolean>;
 }
 
@@ -66,7 +76,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     return;
   },
 
-  register: async(
+  register: async (
     email: string,
     password: string,
     firstName: string,
@@ -74,5 +84,16 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   ) => {
     const resp = await registerUser(email, password, firstName, lastName);
     return resp;
+  },
+
+  changePassword: async (oldPassword: string, newPassword: string) => {
+    const user = get().user;
+    const wasSuccessful = await updatePassword(
+      oldPassword,
+      newPassword,
+      user?.email!
+    );
+    if (wasSuccessful) return true;
+    return false;
   },
 }));

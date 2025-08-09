@@ -22,15 +22,6 @@ export interface CustomerDB {
   phone?: string;
 }
 
-export interface CardDB {
-  id?: string;
-  number: string;
-  month: number;
-  year: number;
-  type: string;
-  idCustomer?: string;
-}
-
 export interface CustomerHasAddresses {
   idAddress: string;
   idCustomer: string;

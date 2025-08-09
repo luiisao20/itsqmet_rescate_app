@@ -2,7 +2,7 @@ import {
   getCurrentAddress,
   getCurrentLocation,
   watchCurrentPosition,
-} from "@/action/location/locations";
+} from "@/core/location/locations";
 import { LocationGeocodedAddress } from "@/infraestructure/interfaces/geo-code";
 import { LatLng } from "@/infraestructure/interfaces/lat-lang";
 import { LocationSubscription } from "expo-location";
