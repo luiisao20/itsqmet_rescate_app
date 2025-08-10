@@ -1,9 +1,9 @@
-import { PropsWithChildren, useEffect } from "react";
-import { router } from "expo-router";
-import { AppState } from "react-native";
+import {router} from "expo-router";
+import {PropsWithChildren, useEffect} from "react";
+import {AppState} from "react-native";
 
-import { usePermissionStore } from "../store/usePermissions";
-import { PermissionStatus } from "@/infraestructure/interfaces/location";
+import {PermissionStatus} from "@/infraestructure/interfaces/location";
+import {usePermissionStore} from "../../presentation/permissions/usePermissions";
 
 const PermissionCheckerProvider = ({ children }: PropsWithChildren) => {
   const { locationStatus, checkLocationPermission } = usePermissionStore();

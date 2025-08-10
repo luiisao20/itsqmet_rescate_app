@@ -6,22 +6,6 @@ export interface RestaurantDB {
   idAddress: string;
 }
 
-export interface AddressDB {
-  id?: string;
-  description: string;
-  latitude: number;
-  longitude: number;
-  alias?: string;
-}
-
-export interface CustomerDB {
-  id?: string;
-  name: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-}
-
 export interface CustomerHasAddresses {
   idAddress: string;
   idCustomer: string;

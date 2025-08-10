@@ -2,8 +2,6 @@ import { supabase } from "@/supabase";
 import { CardDB } from "../../interfaces/card";
 
 export const createUpdateCard = (card: Partial<CardDB>) => {
-  console.log(card.id);
-
   if (!card.id) {
     return createCard(card);
   }
@@ -11,7 +9,7 @@ export const createUpdateCard = (card: Partial<CardDB>) => {
   return updateCard(card);
 };
 
-export const deleteCard = async(idCard: number) => {
+export const deleteCard = async (idCard: number) => {
   const { error } = await supabase.from("cards").delete().eq("id", idCard);
 
   if (error) throw error;
@@ -44,20 +42,24 @@ const createCard = async (card: Partial<CardDB>) => {
 };
 
 const updateCard = async (card: Partial<CardDB>) => {
-  const { type, month, year, number, idCustomer } = card;
+  const { type, month, year, number, id } = card;
 
-  const { data, error } = await supabase.from("cards").insert({
-    type,
-    month,
-    year,
-    number,
-    id_customer: idCustomer,
-  });
+  const { data, error } = await supabase
+    .from("cards")
+    .update({
+      type,
+      month,
+      year,
+      number,
+    })
+    .eq('id', id)
+    .select();
 
   if (error) {
     console.log(error);
-    throw new Error("Error al guardar la tarjeta");
+
+    throw new Error("update card");
   }
-  const newCard: CardDB = data![0];
-  return newCard;
+  const updatedCard: CardDB = data![0];
+  return updatedCard;
 };

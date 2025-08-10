@@ -8,10 +8,11 @@ import {
 } from "react-native";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, TextInput } from "react-native-paper";
+import { Formik } from "formik";
+
 import { Colors } from "@/constants/Colors";
 import { IconGo } from "@/components/ui/Icons";
 import InputThemed from "@/components/ui/InputThemed";
-import { Formik } from "formik";
 import { updatePasswordSchema } from "@/presentation/customer/error/get-error-form";
 import { CustomErrorMessage } from "@/components/CustomErrorMessage";
 import { useAuthStore } from "@/presentation/auth/store/useAuthStore";
@@ -29,7 +30,7 @@ const SecurityProfile = () => {
     seeNew: true,
   });
   const [customerCards, setCustomerCards] = useState<CardDB[] | null>();
-  const [idCardToUpdate, setIdCardToUpdate] = useState<number | null>();
+  const [idCardToUpdate, setIdCardToUpdate] = useState<number | undefined>();
   const { changePassword } = useAuthStore();
   const { cardQuery } = useCards();
 
@@ -184,13 +185,14 @@ const SecurityProfile = () => {
           ))
         )}
         <Pressable
-          onPress={() =>
+          onPress={() => {
+            setIdCardToUpdate(undefined);
             setModalProps((prev) => ({
               ...prev,
               isOpen: true,
               showDelete: false,
-            }))
-          }
+            }));
+          }}
           className="bg-button active:bg-button/60 p-4 rounded-xl mx-10"
         >
           <Text className="text-xl text-white font-semibold text-center">

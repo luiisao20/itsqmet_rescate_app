@@ -5,7 +5,6 @@ import { ActivityIndicator, Portal, TextInput } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
 import { Selection } from "./Selection";
 import { AddressDB } from "@/infraestructure/database/tables";
-import { useAddressStore } from "./store/useAddressStore";
 import { router } from "expo-router";
 
 export interface CardInput {
@@ -117,7 +116,6 @@ export const ModalLocation = ({
   }>({ alias: "", description: "" });
   const [loading, setLoading] = useState<boolean>(false);
   const [success, setSuccess] = useState<boolean>(false);
-  const { fetchAddresses } = useAddressStore();
 
   useEffect(() => {
     location.alias = infoLocation.alias;
@@ -219,67 +217,6 @@ export const ModalLocation = ({
               )}
             </Pressable>
           </View>
-        </View>
-      </View>
-    </Modal>
-  );
-};
-
-export const ModalPayments = ({
-  isOpen,
-  message,
-
-  onClose,
-  onSelect = () => console.log("No implementado"),
-  ...rest
-}: InfoProps) => {
-  const [selected, setSelected] = useState<string>("");
-
-  return (
-    <Modal
-      visible={isOpen}
-      transparent
-      animationType="fade"
-      statusBarTranslucent
-      {...rest}
-    >
-      <View className="flex-1 justify-center items-center bg-black/50">
-        <View className="bg-white w-[95%] rounded-xl py-8 px-10 justify-center items-center relative">
-          <Pressable
-            onPress={() => onClose()}
-            className="absolute top-4 right-4 active:bg-button/60 rounded-xl"
-          >
-            <IconClose className="text-color" />
-          </Pressable>
-          <Text className="text-xl text-color text-center font-semibold">
-            Escoge un método de pago
-          </Text>
-          <View className="flex gap-4 w-full my-4">
-            {/* {cards.map((item, index) => (
-              <Selection
-                key={index}
-                id="4"
-                label={item.type}
-                description={`${item.number} ${item.month} / ${item.year}`}
-                setSelected={() => {
-                  setSelectedCard(item.id!)
-                }}
-              />
-            ))} */}
-            <Selection
-              id="5"
-              label="Efectivo"
-              setSelected={() => {
-                setSelected('5')
-              }}
-            />
-          </View>
-          <Pressable
-            onPress={() => onSelect(selected)}
-            className="bg-success p-4 rounded-xl active:bg-success/40"
-          >
-            <Text className="text-white text-xl shadow-black">Seleccionar</Text>
-          </Pressable>
         </View>
       </View>
     </Modal>

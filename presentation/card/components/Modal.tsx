@@ -1,9 +1,10 @@
+import { useEffect, useState } from "react";
+import { Alert, Modal, ModalProps, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, TextInput } from "react-native-paper";
+
 import { IconClose } from "@/components/ui/Icons";
 import { Colors } from "@/constants/Colors";
 import { CardDB } from "@/core/database/interfaces/card";
-import { useState } from "react";
-import { Alert, Modal, ModalProps, Pressable, Text, View } from "react-native";
-import { ActivityIndicator, TextInput } from "react-native-paper";
 import { useCards } from "../useCards";
 
 export interface CardInput {
@@ -16,15 +17,10 @@ export interface CardInput {
 export interface InputProps extends ModalProps {
   isOpen: boolean;
   inputMode?: "decimal" | "email" | "numeric" | "text";
-  textValue?: string;
-  infoCard?: CardInput;
   showDelete?: boolean;
-  idCurrentCard?: number | null;
+  idCurrentCard?: number | undefined;
 
   onClose: () => void;
-  onSendData?: (text: string) => void;
-  onDeleteData?: (id: string) => void;
-  onUpdateLocation?: () => void;
 }
 
 export const ModalCard = ({
@@ -34,7 +30,6 @@ export const ModalCard = ({
   idCurrentCard,
 
   onClose,
-  onDeleteData = () => {},
   ...rest
 }: InputProps) => {
   const [card, setCard] = useState<CardInput>({
@@ -67,35 +62,45 @@ export const ModalCard = ({
   const handleCard = async () => {
     setIsLoading(true);
 
+    const { number, date, cvv } = card;
+
+    if (number === "" || date === "" || cvv.length !== 3) {
+      Alert.alert("Debes llenar todos los datos");
+      return;
+    }
+
     const cardDb: CardDB = {
-      number: parseInt(card.number.slice(-4)),
-      month: parseInt(card.date.split("/")[0]),
-      year: parseInt(card.date.split("/")[1]),
+      number: parseInt(number.slice(-4)),
+      month: parseInt(date.split("/")[0]),
+      year: parseInt(date.split("/")[1]),
       type: card.type,
     };
+
+    if (idCurrentCard) cardDb.id = idCurrentCard;
 
     await cardMutation.mutate({ ...cardDb });
-    setIsLoading(false);
-  };
-
-  const handleUpdate = async () => {
-    setIsLoading(true);
-    const cardDb: CardDB = {
-      number: parseInt(card.number.slice(-4)),
-      month: parseInt(card.date.split("/")[0]),
-      year: parseInt(card.date.split("/")[1]),
-      type: card.type,
-    };
     setIsLoading(false);
     onClose();
   };
 
   const handleDelete = async () => {
     setIsDeleteLoading(true);
-    await cardDeleteMutation.mutate(idCurrentCard!)
+    await cardDeleteMutation.mutate(idCurrentCard!);
     setIsDeleteLoading(false);
     onClose();
   };
+
+  useEffect(() => {
+    if (!isOpen) {
+      idCurrentCard = undefined;
+      setCard({
+        number: "",
+        date: "",
+        cvv: "",
+        type: "",
+      });
+    }
+  }, [isOpen]);
 
   return (
     <Modal
@@ -108,7 +113,7 @@ export const ModalCard = ({
       <View className="flex-1 justify-center items-center bg-black/50">
         <View className="bg-white w-[95%] rounded-xl py-8 px-10 justify-center items-center relative">
           <Pressable
-            onPress={() => onClose()}
+            onPress={onClose}
             className="absolute top-4 right-4 active:bg-button/60 rounded-xl"
           >
             <IconClose className="text-color" />
@@ -187,10 +192,7 @@ export const ModalCard = ({
             )}
             <Pressable
               className="bg-button rounded-lg px-4 mt-4 active:bg-button/60"
-              onPress={() => {
-                if (showDelete) handleUpdate();
-                else handleCard();
-              }}
+              onPress={handleCard}
             >
               {loading ? (
                 <ActivityIndicator color="white" />

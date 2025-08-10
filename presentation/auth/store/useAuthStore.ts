@@ -6,7 +6,6 @@ import {
 } from "@/core/auth/actions/authActions";
 import { SecureStorageAdapter } from "@/helpers/secure-storage.adapter";
 import { Session, User } from "@supabase/supabase-js";
-import { Alert } from "react-native";
 import { create } from "zustand";
 
 export type AuthStatus = "authenticated" | "unauthenticated" | "checking";

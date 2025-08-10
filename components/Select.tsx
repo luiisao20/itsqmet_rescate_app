@@ -1,9 +1,9 @@
-import { Text, View } from "react-native";
-import { useState } from "react";
-import { Picker, PickerProps } from "@react-native-picker/picker";
-import { Colors } from "@/constants/Colors";
-import { EstablishmentType } from "@/infraestructure/interfaces/selections";
-import { TextInput } from "react-native-paper";
+import {Colors} from "@/constants/Colors";
+import {EstablishmentType} from "@/core/database/interfaces/selections";
+import {Picker, PickerProps} from "@react-native-picker/picker";
+import {useState} from "react";
+import {Text, View} from "react-native";
+import {TextInput} from "react-native-paper";
 
 interface Props extends PickerProps {
   elements: EstablishmentType[];
