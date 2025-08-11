@@ -1,22 +1,18 @@
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { FlatList, ListRenderItem, Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
+import { RefreshControl } from "react-native-gesture-handler";
+import { ActivityIndicator } from "react-native-paper";
 
 import HomeCards from "@/components/HomeCards";
 import PackCard from "@/components/PackCard";
 import { IconGo } from "@/components/ui/Icons";
-import { PackageDB } from "@/infraestructure/database/tables";
-import { usePacksStore } from "@/components/store/usePacksStore";
-import { ActivityIndicator } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
+import { usePackages } from "@/presentation/packages/usePackages";
+import { Package } from "@/core/database/interfaces/packages";
 
 export default function HomeTab() {
-
-  const { fetchPacks, packs, isLoading } = usePacksStore();
-
-  useEffect(() => {
-    fetchPacks('index', 5);
-  }, []);
+  const { packagesQuery } = usePackages({ idCategory: 5 });
 
   const HeaderComponent = () => (
     <>
@@ -52,7 +48,7 @@ export default function HomeTab() {
     </>
   );
 
-  const renderItem: ListRenderItem<PackageDB> = useCallback(
+  const renderItem: ListRenderItem<Package> = useCallback(
     ({ item }) => (
       <View className="px-6 mb-4">
         <PackCard info={item} />
@@ -63,11 +59,17 @@ export default function HomeTab() {
 
   return (
     <>
-      {isLoading ? (
+      {packagesQuery.isLoading ? (
         <ActivityIndicator size={60} color={Colors.color} />
       ) : (
         <FlatList
-          data={packs['index']}
+          refreshControl={
+            <RefreshControl
+              refreshing={packagesQuery.isFetching}
+              onRefresh={async () => await packagesQuery.refetch()}
+            />
+          }
+          data={packagesQuery.data}
           keyExtractor={(_, index) => index.toString()}
           ListHeaderComponent={<HeaderComponent />}
           renderItem={renderItem}

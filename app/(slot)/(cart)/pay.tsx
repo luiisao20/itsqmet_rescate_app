@@ -1,15 +1,15 @@
-import { View, Text, Pressable, ScrollView } from "react-native";
-import { useState } from "react";
 import { router } from "expo-router";
+import { useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
+import { Selection } from "@/components/Selection";
 import { IconCard, IconCash, IconGo } from "@/components/ui/Icons";
 import { Colors } from "@/constants/Colors";
-import { Selection } from "@/components/Selection";
-import { useCartStore } from "@/components/store/usePacksStore";
 import { CardDB } from "@/core/database/interfaces/card";
-import { ModalPayments } from "@/presentation/payment/components/ModalPayments";
-import { useCustomer } from "@/presentation/customer/useCustomer";
 import { useAddressStore } from "@/presentation/addresses/store/useAddressStore";
+import { useCustomer } from "@/presentation/customer/useCustomer";
+import { useCartStore } from "@/presentation/packages/store/usePacksStore";
+import { ModalPayments } from "@/presentation/payment/components/ModalPayments";
 
 export type Time = {
   id: string;

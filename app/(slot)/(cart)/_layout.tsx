@@ -1,14 +1,14 @@
-import { View, Text, Pressable } from "react-native";
-import React from "react";
+import { Pressable, Text, View } from "react-native";
 import { router, Stack, usePathname } from "expo-router";
-import { IconGoBack, IconHome } from "@/components/ui/Icons";
-import { Colors } from "@/constants/Colors";
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+
 import PermissionCheckerProvider from "@/components/providers/PermissionCheckProvider";
-import { useCartStore } from "@/components/store/usePacksStore";
+import { IconGoBack, IconHome } from "@/components/ui/Icons";
+import { Colors } from "@/constants/Colors";
+import { useCartStore } from "@/presentation/packages/store/usePacksStore";
 
 const StackLayout = () => {
   const insets = useSafeAreaInsets();
@@ -105,7 +105,9 @@ const StackLayout = () => {
           >
             <View>
               <Text className="text-lg font-light text-color">Subtotal</Text>
-              <Text className="text-2xl font-semibold text-color">$ {getTotalPrice().toFixed(2)}</Text>
+              <Text className="text-2xl font-semibold text-color">
+                $ {getTotalPrice().toFixed(2)}
+              </Text>
             </View>
             <Pressable
               onPress={() =>

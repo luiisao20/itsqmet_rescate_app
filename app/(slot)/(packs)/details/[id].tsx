@@ -1,49 +1,26 @@
-import { View, Text, StatusBar, Pressable, Linking } from "react-native";
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useState,
-} from "react";
-import {
-  router,
-  useFocusEffect,
-  useLocalSearchParams,
-  useNavigation,
-} from "expo-router";
-import { Colors } from "@/constants/Colors";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import { Linking, Pressable, StatusBar, Text, View } from "react-native";
+
+import { ModalInfo } from "@/components/Modal";
+import { ModalProps } from "@/components/PackCard";
 import HeaderPackSolo from "@/components/ui/HeaderPackSolo";
 import {
   IconBag,
   IconGo,
   IconMap,
+  IconMapOff,
   IconStandard,
   IconStar,
 } from "@/components/ui/Icons";
-import { LatLng } from "@/infraestructure/interfaces/lat-lang";
-import { ModalProps } from "@/components/PackCard";
-import { ModalInfo } from "@/components/Modal";
-import { useCartStore, usePacksStore } from "@/components/store/usePacksStore";
-import { PackageDB } from "@/infraestructure/database/tables";
-
-interface Address {
-  label: string;
-  latLng: LatLng;
-}
+import { Colors } from "@/constants/Colors";
+import { useCartStore } from "@/presentation/packages/store/usePacksStore";
+import { usePackage } from "@/presentation/packages/usePackages";
 
 const DetailsScreen = () => {
   const { id } = useLocalSearchParams();
-  const navigation = useNavigation();
-  const { getSelectedPack } = usePacksStore();
-  const [currentPack, setCurrentPack] = useState<PackageDB | null>();
-  const [enabled, setEnabled] = useState<boolean>(true);
-  const address: Address = {
-    label: "Diagonal a parada de metro, Av. 6 de Diciembre, Quito 170402",
-    latLng: {
-      latitude: -0.20830874018740156,
-      longitude: -78.49557458400517,
-    },
-  };
+  const idPackage = parseInt(`${id}`);
+  const { packageQuery } = usePackage(idPackage);
   const [modalProps, setModalProps] = useState<ModalProps>({
     product: "",
     message: "",
@@ -54,28 +31,11 @@ const DetailsScreen = () => {
   const [remove, setRemove] = useState<boolean>(false);
 
   useEffect(() => {
-    const selected = getSelectedPack();
-    setCurrentPack(selected);
-  }, []);
-
-  useEffect(() => {
-    if (!currentPack) return;
-
-    setEnabled(currentPack.packsLeft > 0);
     setModalProps((prev) => ({
       ...prev,
-      product: currentPack.title,
+      product: packageQuery.data?.title!,
     }));
-  }, [currentPack]);
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      title: id,
-      headerTitleStyle: {
-        color: Colors.color,
-      },
-    });
-  }, [navigation, id]);
+  }, [packageQuery.data]);
 
   useFocusEffect(
     useCallback(() => {
@@ -84,53 +44,69 @@ const DetailsScreen = () => {
     }, [])
   );
 
-  const openInGoogleMaps = ({ latitude, longitude }: LatLng) => {
+  const openInGoogleMaps = (
+    latitude: number | null,
+    longitude: number | null
+  ) => {
     const url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
     Linking.openURL(url).catch((err) =>
       console.error("Error abriendo Google Maps", err)
     );
   };
 
-  if (!currentPack) return <Text>Cargando...</Text>;
+  if (packageQuery.isLoading) return <Text>Cargando...</Text>;
+
+  const {
+    rate,
+    title,
+    pickup,
+    description,
+    price,
+    latitude,
+    longitude,
+    packs_left,
+  } = packageQuery.data!;
 
   return (
     <View className="flex flex-1">
-      <HeaderPackSolo pack={currentPack!} enabled={enabled} />
+      <HeaderPackSolo pack={packageQuery.data!} />
       <View className="px-6 my-4">
         <View className="flex gap-2">
           <View className="flex flex-row items-center gap-4">
             <IconBag size={16} />
-            <Text className="text-base font-semibold text-color">
-              Pack Sorpresa
-            </Text>
+            <Text className="text-base font-semibold text-color">{title}</Text>
           </View>
           <View className="flex flex-row items-baseline gap-4">
             <IconStar size={16} color={Colors.color} />
             <Text className="text-base font-semibold text-color">
-              {currentPack?.rate}{" "}
-              <Text className="text-gray-700 font-light">(121)</Text>
+              {rate} <Text className="text-gray-700 font-light">(121)</Text>
             </Text>
           </View>
           <View className="flex flex-row items-baseline gap-4">
             <IconStandard size={16} color={Colors.color} />
             <Text className="text-base font-semibold text-color">
-              Recoger entre:{" "}
-              <Text className="font-light">{currentPack?.pickUp}</Text>
+              Recoger entre: <Text className="font-light">{pickup}</Text>
             </Text>
           </View>
         </View>
         <Pressable
-          onPress={() => openInGoogleMaps(address.latLng)}
+          disabled={!description}
+          onPress={() => openInGoogleMaps(latitude, longitude)}
           className="flex p-2 flex-row my-4 justify-between items-center border-b-2 border-color active:bg-gray-200"
         >
-          <IconMap color={Colors.color} />
+          {description ? (
+            <IconMap color={Colors.color} />
+          ) : (
+            <IconMapOff color={Colors.color} />
+          )}
           <View className="w-4/5">
             <Text
               numberOfLines={2}
               ellipsizeMode="tail"
               className="text-lg font-light"
             >
-              {address.label}
+              {description ??
+                "No existe ubicación para este restaurante, lo sentimos :c"}
             </Text>
           </View>
           <IconGo color={Colors.color} />
@@ -138,22 +114,27 @@ const DetailsScreen = () => {
         <Pressable
           onPress={() => {
             if (remove) {
-              removeFromCart(currentPack.id!);
+              removeFromCart(packageQuery.data?.id!);
               setRemove(false);
             } else {
-              addToCart(currentPack);
+              addToCart(packageQuery.data!);
               setRemove(true);
             }
           }}
-          className="bg-button p-4 rounded-xl active:bg-button/60 my-4"
+          disabled={packs_left === 0}
+          className={`p-4 rounded-xl active:bg-button/60 my-4 ${packs_left > 0 ? "bg-button" : "bg-gray-300"}`}
         >
           <Text className="text-white text-center font-semibold text-xl">
-            {remove ? "Eliminar del carrito" : "Agregar al carrito"} ${" "}
-            {currentPack?.price}
+            {remove ? "Eliminar del carrito" : "Agregar al carrito"} $ {price}
           </Text>
         </Pressable>
-        <Pressable onPress={()=> router.push('/(slot)/(cart)')} className="bg-success rounded-xl p-4 active:bg-success/60">
-          <Text className="text-white font-semibold text-center text-xl">Ir al carrito</Text>
+        <Pressable
+          onPress={() => router.push("/(slot)/(cart)")}
+          className="bg-success rounded-xl p-4 active:bg-success/60"
+        >
+          <Text className="text-white font-semibold text-center text-xl">
+            Ir al carrito
+          </Text>
         </Pressable>
       </View>
       <ModalInfo

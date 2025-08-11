@@ -1,60 +1,18 @@
-import { PackageDB } from "@/infraestructure/database/tables";
+import { Package } from "@/core/database/interfaces/packages";
 import { create } from "zustand";
 
-interface PacksStore {
-  packs: Record<string, PackageDB[]>;
-  isLoading: boolean;
-  selectedPackId: string | null;
-
-  fetchPacks: (category: string, quantity: number, order?: string) => Promise<void>;
-  getPackById: (id: string) => PackageDB | null;
-  getSelectedPack: () => PackageDB | null;
-  setSelectedPack: (id: string) => void;
-}
-
-export const usePacksStore = create<PacksStore>()((set, get) => ({
-  packs: {},
-  isLoading: false,
-  selectedPackId: null,
-
-  fetchPacks: async (category: string, quantity: number, order = 'title') => {
-    if (get().packs[category]?.length > 0) return;
-    try {
-      set({ isLoading: true });
-    } catch (error) {
-      throw error;
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
-  getPackById: (id: string) => {
-    const allPacks = Object.values(get().packs).flat();
-    return allPacks.find((pack) => pack.id === id) ?? null;
-  },
-
-  getSelectedPack: () => {
-    const { selectedPackId } = get();
-    const allPacks = Object.values(get().packs).flat();
-    return allPacks.find((pack) => pack.id === selectedPackId) ?? null;
-  },
-
-  setSelectedPack: (id: string) => set({ selectedPackId: id }),
-}));
-
-export interface CartItem extends PackageDB {
+export interface PackItem extends Package {
   quantity?: number;
 }
 
 interface CartStore {
-  cart: CartItem[];
+  cart: PackItem[];
 
-  decreaseQuantity: (id: string) => void;
-  addToCart: (pack: PackageDB) => void;
-  removeFromCart: (id: string) => void;
+  decreaseQuantity: (id: number) => void;
+  addToCart: (pack: Package) => void;
+  removeFromCart: (id: number) => void;
   clearCart: () => void;
   getTotalPrice: () => number;
-  getCart: () => CartItem[];
 }
 
 export const useCartStore = create<CartStore>()((set, get) => ({
@@ -109,33 +67,32 @@ export const useCartStore = create<CartStore>()((set, get) => ({
   getTotalPrice: () =>
     get().cart.reduce((total, item) => total + item.quantity! * item.price, 0),
 
-  getCart: () => get().cart,
 }));
 
 interface FavStore {
-  favorites: PackageDB[];
+  favorites: Package[];
 
-  addToFavorites: (pack: PackageDB) => void;
-  removeFromFavorites: (id: string) => void;
-  getFavorites: () => PackageDB[];
-  getIsFavorite: (id: string) => boolean;
+  addToFavorites: (pack: Package) => void;
+  removeFromFavorites: (id: number) => void;
+  getFavorites: () => Package[];
+  getIsFavorite: (id: number) => boolean;
 }
 
 export const useFavStore = create<FavStore>()((set, get) => ({
   favorites: [],
 
-  addToFavorites: (pack: PackageDB) =>
+  addToFavorites: (pack: Package) =>
     set((state) => {
       return { favorites: [...state.favorites, { ...pack }] };
     }),
 
-  removeFromFavorites: (id: string) =>
+  removeFromFavorites: (id) =>
     set((state) => ({
       favorites: state.favorites.filter((item) => item.id !== id),
     })),
 
   getFavorites: () => get().favorites,
 
-  getIsFavorite: (id: string) =>
+  getIsFavorite: (id) =>
     get().favorites.find((item) => item.id === id) !== undefined,
 }));

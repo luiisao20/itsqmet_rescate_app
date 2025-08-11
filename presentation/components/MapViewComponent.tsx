@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import MapView, { Region } from "react-native-maps";
 import { ActivityIndicator } from "react-native-paper";
 
@@ -111,23 +111,20 @@ const MapViewComponent = ({ locationRef, onUpdateLocation }: Props) => {
 
   return (
     <>
-      <Text className="text-xl text-color font-light my-4">
+      <Text style={styles.title}>
         {locationRef ? locationRef.description : newAddres}
       </Text>
-      <View className="relative h-3/5 my-2">
+      <View style={styles.mapContainer}>
         <MapView
           ref={mapRef}
           region={region}
           onRegionChangeComplete={handleRegionChange}
           style={{ height: "100%", width: "100%" }}
         />
-        <View className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-full">
+        <View style={styles.pinContainer}>
           <IconMapPin color={Colors.color} />
         </View>
-        <Pressable
-          onPress={goCurrentLocation}
-          className="absolute right-4 bottom-10 bg-background rounded-full active:opacity-60"
-        >
+        <Pressable onPress={goCurrentLocation} style={styles.compassButton}>
           <IconCompass color={Colors.color} size={36} />
         </Pressable>
       </View>
@@ -136,3 +133,36 @@ const MapViewComponent = ({ locationRef, onUpdateLocation }: Props) => {
 };
 
 export default MapViewComponent;
+
+const styles = StyleSheet.create({
+  title: {
+    fontSize: 20,
+    color: Colors.color,
+    fontWeight: "300",
+    marginVertical: 16,
+  },
+  mapContainer: {
+    position: "relative",
+    height: "60%",
+    marginVertical: 8
+  },
+  map: {
+    height: "100%",
+    width: "100%",
+  },
+  pinContainer: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: [{ translateX: -12 }, { translateY: -24 }],
+  },
+  compassButton: {
+    position: "absolute",
+    right: 16,
+    bottom: 40,
+    backgroundColor: Colors.background,
+    borderRadius: 9999,
+    opacity: 1,
+    padding: 4,
+  },
+});

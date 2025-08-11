@@ -1,8 +1,17 @@
-import { Colors } from "@/constants/Colors";
+import { useEffect, useState } from "react";
+import { router } from "expo-router";
 import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
-import React, { useEffect, useState } from "react";
 import { Pressable, PressableProps, Text, View } from "react-native";
+import { ActivityIndicator } from "react-native-paper";
+import { LinearGradient } from "expo-linear-gradient";
+
+import { Colors } from "@/constants/Colors";
+import { Package } from "@/core/database/interfaces/packages";
+import {
+  useCartStore,
+  useFavStore,
+} from "../presentation/packages/store/usePacksStore";
+import { ModalInfo } from "./Modal";
 import {
   IconAdd,
   IconHeartFilled,
@@ -12,19 +21,10 @@ import {
   IconStar,
   IconTrash,
 } from "./ui/Icons";
-import { ActivityIndicator } from "react-native-paper";
-import { ModalInfo } from "./Modal";
-import { router } from "expo-router";
 import LogoPack from "./ui/LogoPack";
-import {
-  CartItem,
-  useCartStore,
-  useFavStore,
-  usePacksStore,
-} from "./store/usePacksStore";
 
 interface Props extends PressableProps {
-  info: CartItem;
+  info: PackItem;
   home?: boolean;
   className?: string;
 }
@@ -36,13 +36,15 @@ export interface ModalProps {
   cart?: boolean;
 }
 
+interface PackItem extends Package {
+  quantity?: number;
+}
+
 const PackCard = ({ info, home = true, className = "", ...rest }: Props) => {
   const [backgroundLoaded, setBackgroundLoaded] = useState(false);
 
-  const [enabled, setEnabled] = useState<boolean>(true);
   const { addToCart, decreaseQuantity } = useCartStore();
   const { addToFavorites, removeFromFavorites, getIsFavorite } = useFavStore();
-  const { setSelectedPack } = usePacksStore();
 
   const [modalProps, setModalProps] = useState<ModalProps>({
     product: "",
@@ -51,43 +53,16 @@ const PackCard = ({ info, home = true, className = "", ...rest }: Props) => {
     cart: false,
   });
 
-  // Setea si hay producto disponible
   useEffect(() => {
-    setEnabled(info.packsLeft > 0);
-    // Setea el nombre del producto para el Modal
     setModalProps((prev) => ({
       ...prev,
       product: info.title,
     }));
   }, []);
 
-  const handleFavorite = () => {
-    const isFavorite = getIsFavorite(info.id!);
+  const handleFavorite = () => {};
 
-    if (isFavorite) {
-      removeFromFavorites(info.id!);
-      setModalProps((prev) => ({
-        ...prev,
-        isOpen: true,
-        message: "ha sido eliminado de favoritos",
-      }));
-      return;
-    }
-
-    addToFavorites(info);
-    setModalProps((prev) => ({
-      ...prev,
-      isOpen: true,
-      message: "ha sido añadido a favoritos",
-    }));
-  };
-
-  /* TODO: undone de modal, usando useContext, tanto el 
-  de index, packs y cart es el mismo, solo hay que 
-  diferenciar el undone de los favoritos
-  */
   const handleGoPack = () => {
-    setSelectedPack(info.id!);
     router.push({
       pathname: "/(slot)/(packs)/details/[id]",
       params: { id: info.id! },
@@ -130,36 +105,31 @@ const PackCard = ({ info, home = true, className = "", ...rest }: Props) => {
           />
         )}
         <Image
-          source={{ uri: info.restaurant?.background! }}
+          source={{
+            uri: `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/public/images/background-general.png`,
+          }}
           style={{
             height: 180,
             width: "100%",
             borderTopLeftRadius: 16,
             borderTopRightRadius: 16,
-            opacity: backgroundLoaded ? (enabled ? 1 : 0.4) : 0,
+            opacity: backgroundLoaded ? (info.packs_left > 0 ? 1 : 0.4) : 0,
           }}
           contentFit="cover"
           transition={300}
-          priority="high"
-          cachePolicy="memory-disk"
           onLoad={() => setBackgroundLoaded(true)}
           onLoadStart={() => setBackgroundLoaded(false)}
           placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
         />
-        {backgroundLoaded && (
-          <LogoPack
-            route={info.restaurant?.logo!}
-            title={info.restaurant?.name!}
-          />
-        )}
+        {backgroundLoaded && <LogoPack title={info.name} />}
         {backgroundLoaded && (
           <>
             <View
-              className={`absolute p-2 rounded-xl top-2 left-2 ${enabled ? "bg-button" : "bg-gray-500"}`}
+              className={`absolute p-2 rounded-xl top-2 left-2 ${info.packs_left > 0 ? "bg-button" : "bg-gray-500"}`}
             >
-              {enabled ? (
+              {info.packs_left > 0 ? (
                 <Text className="text-white font-semibold ">
-                  Quedan {info.packsLeft}
+                  Quedan {info.packs_left}
                 </Text>
               ) : (
                 <Text className="text-white font-semibold ">Agotado</Text>
@@ -173,13 +143,13 @@ const PackCard = ({ info, home = true, className = "", ...rest }: Props) => {
                     {...rest}
                     className="bg-white p-2 rounded-full active:scale-125 z-20"
                   >
-                    {getIsFavorite(info.id!) ? (
+                    {getIsFavorite(info.id) ? (
                       <IconHeartFilled size={18} color={Colors.color} />
                     ) : (
                       <IconHeartOut size={18} />
                     )}
                   </Pressable>
-                  {enabled && (
+                  {info.packs_left > 0 && (
                     <Pressable
                       {...rest}
                       onPress={() => {
@@ -235,7 +205,7 @@ const PackCard = ({ info, home = true, className = "", ...rest }: Props) => {
           </Text>
         </View>
         <Text className="text-base font-light text-color">
-          Recoger entre {info.pickUp}
+          Recoger entre {info.pickup}
         </Text>
         <View className="flex flex-row justify-between">
           <View className="flex flex-row gap-4">
@@ -251,7 +221,7 @@ const PackCard = ({ info, home = true, className = "", ...rest }: Props) => {
             </Text>
           </View>
           <Text
-            className={`text-xl font-bold ${enabled ? "text-color" : "text-gray-300"}`}
+            className={`text-xl font-bold ${info.packs_left > 0 ? "text-color" : "text-gray-300"}`}
           >
             $ {info.price}
           </Text>

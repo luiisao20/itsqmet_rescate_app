@@ -1,5 +1,5 @@
 import { useFonts } from "expo-font";
-import { Slot } from "expo-router";
+import { Slot, Stack } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { PaperProvider } from "react-native-paper";
 import "react-native-reanimated";
@@ -44,7 +44,7 @@ export default function RootLayout() {
       <PaperProvider>
         <SafeAreaProvider>
           <GestureHandlerRootView style={{ flex: 1 }}>
-            <Slot />
+            <Stack screenOptions={{ headerShown: false }} />
           </GestureHandlerRootView>
         </SafeAreaProvider>
       </PaperProvider>

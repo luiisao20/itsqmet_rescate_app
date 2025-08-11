@@ -5,12 +5,12 @@ import { useCustomer } from "../customer/useCustomer";
 import {
   getCustomerAddress,
   getCustomerAddresses,
-} from "@/core/database/actions/addres/get-customer-addresses.action";
+} from "@/core/database/actions/address/get-customer-addresses.action";
 import { AddressDB } from "@/core/database/interfaces/address";
 import {
   createUpdateAddress,
   deleteAddress,
-} from "@/core/database/actions/addres/create-customer-address.action";
+} from "@/core/database/actions/address/create-customer-address.action";
 
 export const useAddresses = () => {
   const { customerQuery } = useCustomer();

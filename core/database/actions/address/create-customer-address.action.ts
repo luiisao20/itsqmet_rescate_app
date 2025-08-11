@@ -2,16 +2,10 @@ import { supabase } from "@/supabase";
 import { AddressDB } from "../../interfaces/address";
 
 export const createUpdateAddress = (address: Partial<AddressDB>, idCustomer: number) => {
-  
-  console.log({address, idCustomer});
   if (address.id && address.id !== 0) {
-    console.log('here');
-    
     return updateAddress(address)
   }
-
   return createAddress(address, idCustomer)
-
 }
 
 const createAddress = async (
