@@ -1,21 +1,24 @@
-import { Text, View, useWindowDimensions } from "react-native";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
+import { View, useWindowDimensions } from "react-native";
+import { ActivityIndicator } from "react-native-paper";
 import { useSharedValue } from "react-native-reanimated";
 import Carousel, {
   ICarouselInstance,
   Pagination,
 } from "react-native-reanimated-carousel";
+
 import { Colors } from "@/constants/Colors";
+import { Category } from "@/core/database/interfaces/categories";
+import { usePackages } from "@/presentation/packages/usePackages";
 import PackCard from "./PackCard";
-import { useFavStore, usePacksStore } from "./store/usePacksStore";
-import { PackageDB } from "@/infraestructure/database/tables";
-import { ActivityIndicator } from "react-native-paper";
+import { Package } from "@/core/database/interfaces/packages";
 
 interface Props {
-  keyPack: string;
+  category: Category;
+  favorites: Package[];
 }
 
-const PacksCarousel = ({ keyPack }: Props) => {
+const PacksCarousel = ({ category, favorites }: Props) => {
   const progress = useSharedValue<number>(0);
   const ref = useRef<ICarouselInstance | null>(null);
   const width: number = useWindowDimensions().width * 0.9;
@@ -26,41 +29,10 @@ const PacksCarousel = ({ keyPack }: Props) => {
       animated: true,
     });
   };
+  const { packagesQuery } = usePackages({ idCategory: category.id });
 
-  const { fetchPacks, isLoading } = usePacksStore();
-  const { favorites } = useFavStore();
-  const [specPacks, setPacks] = useState<PackageDB[]>([]);
-
-  useEffect(() => {
-    if (keyPack === "favorite") {
-      setPacks(favorites);
-      return;
-    }
-    fetchPacks(keyPack, 5, "rate").then(() => {
-      const updated = usePacksStore.getState().packs[keyPack];
-      if (updated) {
-        setPacks(updated);
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    if (keyPack === "favorite") {
-      setPacks(favorites);
-      return;
-    }
-  }, [favorites]);
-
-  if (isLoading) {
+  if (packagesQuery.isLoading) {
     return <ActivityIndicator size={30} color={Colors.color} />;
-  }
-
-  if (keyPack === "favorite" && favorites.length === 0) {
-    return (
-      <Text className="text-xl font-semibold text-center">
-        No existen paquetes favoritos, ¡Añade uno!
-      </Text>
-    );
   }
 
   return (
@@ -73,13 +45,16 @@ const PacksCarousel = ({ keyPack }: Props) => {
             onProgressChange={progress}
             width={width}
             height={300}
-            data={specPacks}
-            renderItem={({ item }) => <PackCard className="mx-2" info={item} />}
+            data={packagesQuery.data!}
+            renderItem={({ item }) => {
+              const isFavorite = favorites.some(fav => fav.id === item.id)
+              return <PackCard className="mx-2" info={item} isFavorite={isFavorite} />;
+            }}
           />
         </View>
         <Pagination.Basic
           progress={progress}
-          data={specPacks}
+          data={packagesQuery.data!}
           dotStyle={{
             width: 16,
             height: 4,

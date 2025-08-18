@@ -1,11 +1,11 @@
 import { View, Text } from "react-native";
-import React, { useState } from "react";
+import { useState } from "react";
 import { ActivityIndicator } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
 import { Image } from "expo-image";
 
 interface Props {
-  route: string;
+  route?: string;
   title: string;
 }
 
@@ -32,7 +32,7 @@ const LogoPack = ({ route, title }: Props) => {
         )}
 
         <Image
-          source={{ uri: route }}
+          source={{ uri: `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/public/images/logo-general.png` }}
           style={{
             height: 60,
             width: 60,
@@ -41,8 +41,6 @@ const LogoPack = ({ route, title }: Props) => {
           }}
           contentFit="cover"
           transition={200}
-          priority="normal"
-          cachePolicy="memory-disk"
           onLoad={() => setLogoLoaded(true)}
           onLoadStart={() => setLogoLoaded(false)}
         />

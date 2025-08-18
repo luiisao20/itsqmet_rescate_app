@@ -1,5 +1,5 @@
 import { useFonts } from "expo-font";
-import { Slot } from "expo-router";
+import { Slot, Stack } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { PaperProvider } from "react-native-paper";
 import "react-native-reanimated";
@@ -8,32 +8,17 @@ import { useEffect } from "react";
 
 import "../global.css";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { useAuthStore } from "@/components/store/useAuth";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/firebase/firebase.config";
-import { useCustomerStore } from "@/components/store/useDb";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
 
 export default function RootLayout() {
-  const { user, setLoading, setUser } = useAuthStore();
-
-  const { customer, fetchCustomer } = useCustomerStore();
-
-  useEffect(() => {
-    const unsuscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-    return unsuscribe;
-  }, []);
-
-  useEffect(() => {
-    if (user?.email) {
-      fetchCustomer(user.email);
-      console.log(customer);
-      
-    }
-  }, [user?.email]);
-
   useEffect(() => {
     NavigationBar.setBackgroundColorAsync("#ffffff");
     NavigationBar.setButtonStyleAsync("dark");
@@ -55,12 +40,14 @@ export default function RootLayout() {
   }
 
   return (
-    <PaperProvider>
-      <SafeAreaProvider>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <Slot />
-        </GestureHandlerRootView>
-      </SafeAreaProvider>
-    </PaperProvider>
+    <QueryClientProvider client={queryClient}>
+      <PaperProvider>
+        <SafeAreaProvider>
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <Stack screenOptions={{ headerShown: false }} />
+          </GestureHandlerRootView>
+        </SafeAreaProvider>
+      </PaperProvider>
+    </QueryClientProvider>
   );
 }

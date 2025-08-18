@@ -1,5 +1,4 @@
-import { View, Text, Pressable } from "react-native";
-import React from "react";
+import { Text, Pressable } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { router, Stack } from "expo-router";
 import { IconGoBack, IconHome } from "@/components/ui/Icons";
@@ -33,7 +32,7 @@ const LayoutPacks = () => {
           ),
         }}
       >
-        <Stack.Screen name="[id]" />
+        <Stack.Screen name="[id]" options={{ title: "" }} />
         <Stack.Screen
           name="details/[id]"
           options={{

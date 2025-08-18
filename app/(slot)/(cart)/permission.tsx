@@ -1,10 +1,9 @@
-import { View, Text, Pressable } from "react-native";
+import { usePermissionStore } from "@/presentation/permissions/usePermissions";
 import React from "react";
-import { usePermissionStore } from "@/components/store/usePermissions";
+import { Pressable, Text, View } from "react-native";
 
 const PermissionsScreen = () => {
   const { locationStatus, requestLocationPermission } = usePermissionStore();
-  
 
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>

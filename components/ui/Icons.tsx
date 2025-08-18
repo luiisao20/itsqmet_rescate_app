@@ -28,6 +28,10 @@ export const IconMap = ({ size = 24, color = "black", className }: Props) => (
   <MaterialCommunityIcons name="map-marker-right" size={size} color={color} className={className} />
 );
 
+export const IconMapOff = ({ size = 24, color = "black", className }: Props) => (
+  <MaterialCommunityIcons name="map-marker-off" size={size} color={color} className={className} />
+);
+
 export const IconTrash = ({ size = 24, color = "black", className }: Props) => (
   <MaterialCommunityIcons name="trash-can-outline" size={size} color={color} className={className} />
 );

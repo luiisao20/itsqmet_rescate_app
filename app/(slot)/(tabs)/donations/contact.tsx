@@ -1,54 +1,22 @@
-import { View, Text, KeyboardAvoidingView, Pressable } from "react-native";
-import { TextInput } from "react-native-paper";
-import { Colors } from "@/constants/Colors";
+import { CustomErrorMessage } from "@/components/CustomErrorMessage";
 import Select from "@/components/Select";
-import { EstablishmentType } from "@/infraestructure/interfaces/selections";
-import { ScrollView } from "react-native-gesture-handler";
-import { useState } from "react";
+import InputThemed from "@/components/ui/InputThemed";
+import { Colors } from "@/constants/Colors";
+import { sendContactInfo } from "@/core/database/actions/contact/send-contact-info.action";
+import { Contact } from "@/core/database/interfaces/contact";
 import {
-  ContactCompany,
-  ContactPerson,
-} from "@/infraestructure/interfaces/contact-info";
-import {router} from "expo-router";
+  establishmentTypes,
+  foodTypes,
+} from "@/presentation/contact/constants";
+import { contactInfoSchema } from "@/presentation/customer/error/get-error-form";
+import { router } from "expo-router";
+import { Formik } from "formik";
+import { KeyboardAvoidingView, Pressable, Text, View } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
+import { ActivityIndicator } from "react-native-paper";
 
 const contact = () => {
-  const establishmentTypes: EstablishmentType[] = [
-    { label: "SELECCIONAR", value: "0" },
-    { label: "Restaurante", value: "restaurante" },
-    { label: "Cafetería", value: "cafeteria" },
-    { label: "Panadería", value: "panaderia" },
-    { label: "Pastelería", value: "pasteleria" },
-    { label: "Comida rápida", value: "comida_rapida" },
-    { label: "Food Truck", value: "food_truck" },
-    { label: "Buffet", value: "buffet" },
-    { label: "Bar / Lounge", value: "bar_lounge" },
-    { label: "Catering / Eventos", value: "catering" },
-    { label: "Tienda de abarrotes", value: "tienda" },
-    { label: "Supermercado pequeño", value: "supermercado_pequeno" },
-    { label: "Frutería", value: "fruteria" },
-    { label: "Mercado local / plaza", value: "mercado_local" },
-    { label: "Otro (especifique)", value: "1" },
-  ];
-
-  const foodTypes: EstablishmentType[] = [
-    { label: "SELECCIONAR", value: "0" },
-    { label: "Comida típica ecuatoriana", value: "tipica_ecuatoriana" },
-    { label: "Comida rápida", value: "comida_rapida" },
-    { label: "Gourmet", value: "gourmet" },
-    { label: "Vegetariana", value: "vegetariana" },
-    { label: "Vegana", value: "vegana" },
-    { label: "Internacional", value: "internacional" },
-    { label: "Asiática", value: "asiatica" },
-    { label: "Italiana", value: "italiana" },
-    { label: "Postres y dulces", value: "postres_dulces" },
-    { label: "Panadería", value: "panaderia" },
-    { label: "Pescados y mariscos", value: "mariscos" },
-    { label: "Comida casera", value: "comida_casera" },
-    { label: "Bebidas y jugos", value: "bebidas" },
-    { label: "Otro (especifique)", value: "1" },
-  ];
-
-  const [companyInfo, setCompanyInfo] = useState<ContactCompany>({
+  const contactInfo: Contact = {
     companyName: "",
     brandName: "",
     ruc: "",
@@ -57,228 +25,240 @@ const contact = () => {
     address: "",
     phone: "",
     email: "",
-  });
-
-  const [contactInfo, setContactInfo] = useState<ContactPerson>({
-    name: "",
-    lastName: "",
-    id: "",
-    position: "",
-    cellphone: "",
-    email: "",
-  });
+    contactName: "",
+    contactLastName: "",
+    contactId: "",
+    contactPosition: "",
+    contactPhone: "",
+    contactEmail: "",
+  };
 
   return (
-    <KeyboardAvoidingView behavior="position" keyboardVerticalOffset={90}>
+    <KeyboardAvoidingView behavior="position">
       <ScrollView className="px-6" keyboardShouldPersistTaps="handled">
-        <Text className="text-base text-justify text-color">
+        <Text className="text-lg text-justify text-color">
           Ingrese la información necesaria y el equipo de Rescate App se
           contactará con ustedes en la mayor brevedad posible
         </Text>
         <View className="mb-20 flex gap-6">
-          <View className="bg-background w-[95%] p-4 rounded-xl mx-auto">
-            <Text className="text-color text-lg font-semibold text-center">
-              Información del establecimiento
-            </Text>
-            <TextInput
-              label="Razón social (obligatorio)"
-              className="bg-background w-full"
-              autoCapitalize="words"
-              textColor={Colors.color}
-              underlineColor={Colors.color}
-              activeUnderlineColor={Colors.button}
-              inputMode="text"
-              value={companyInfo.companyName}
-              onChangeText={(text) =>
-                setCompanyInfo((prev) => ({ ...prev, companyName: text }))
+          <Formik
+            validationSchema={contactInfoSchema}
+            initialValues={contactInfo}
+            onSubmit={async (contactLike, { setSubmitting }) => {
+              try {
+                await sendContactInfo(contactLike);
+                router.push("/donations/success");
+              } catch (error) {
+                console.log(error);
               }
-            />
-            <TextInput
-              label="Nombre comercial"
-              className="bg-background w-full"
-              autoCapitalize="words"
-              textColor={Colors.color}
-              underlineColor={Colors.color}
-              activeUnderlineColor={Colors.button}
-              inputMode="text"
-              value={companyInfo.brandName}
-              onChangeText={(text) =>
-                setCompanyInfo((prev) => ({ ...prev, brandName: text }))
-              }
-            />
-            <TextInput
-              label="RUC"
-              className="bg-background w-full"
-              textColor={Colors.color}
-              underlineColor={Colors.color}
-              activeUnderlineColor={Colors.button}
-              inputMode="numeric"
-              value={companyInfo.ruc}
-              onChangeText={(text) =>
-                setCompanyInfo((prev) => ({ ...prev, ruc: text }))
-              }
-            />
-            <Select
-              title="Escoja el tipo de establecimiento (obligatorio)"
-              elements={establishmentTypes}
-              onSelected={(item) =>
-                setCompanyInfo((prev) => ({
-                  ...prev,
-                  establishmentType: item,
-                }))
-              }
-              type="Tipo de establecimiento"
-              onOtherValue={(value) =>
-                setCompanyInfo((prev) => ({
-                  ...prev,
-                  establishmentType: value,
-                }))
-              }
-            />
-            <Select
-              title="Escoja la categoría de comida (obligatorio)"
-              elements={foodTypes}
-              onSelected={(item) =>
-                setCompanyInfo((prev) => ({
-                  ...prev,
-                  foodType: item,
-                }))
-              }
-              type="Categoría de comida"
-              onOtherValue={(value) =>
-                setCompanyInfo((prev) => ({
-                  ...prev,
-                  foodType: value,
-                }))
-              }
-            />
-            <TextInput
-              label="Dirección principal"
-              className="bg-background w-full"
-              autoCapitalize="words"
-              textColor={Colors.color}
-              underlineColor={Colors.color}
-              activeUnderlineColor={Colors.button}
-              inputMode="text"
-              value={companyInfo.address}
-              onChangeText={(text) =>
-                setCompanyInfo((prev) => ({ ...prev, address: text }))
-              }
-            />
-            <TextInput
-              label="Teléfono del local"
-              className="bg-background w-full"
-              autoCapitalize="words"
-              textColor={Colors.color}
-              underlineColor={Colors.color}
-              activeUnderlineColor={Colors.button}
-              inputMode="numeric"
-              value={companyInfo.phone}
-              onChangeText={(text) =>
-                setCompanyInfo((prev) => ({ ...prev, phone: text }))
-              }
-            />
-            <TextInput
-              label="Correo electrónico del local"
-              className="bg-background w-full"
-              autoCapitalize="words"
-              textColor={Colors.color}
-              underlineColor={Colors.color}
-              activeUnderlineColor={Colors.button}
-              inputMode="email"
-              value={companyInfo.email}
-              onChangeText={(text) =>
-                setCompanyInfo((prev) => ({ ...prev, email: text }))
-              }
-            />
-          </View>
-          <View className="bg-background w-[95%] p-4 rounded-xl mx-auto">
-            <Text className="text-color text-lg font-semibold text-center">
-              Información del Representante legal
-            </Text>
-            <TextInput
-              label="Nombres"
-              className="bg-background w-full"
-              autoCapitalize="words"
-              textColor={Colors.color}
-              underlineColor={Colors.color}
-              activeUnderlineColor={Colors.button}
-              inputMode="text"
-              value={contactInfo.name}
-              onChangeText={(text) =>
-                setContactInfo((prev) => ({ ...prev, name: text }))
-              }
-            />
-            <TextInput
-              label="Apellidos"
-              className="bg-background w-full"
-              autoCapitalize="words"
-              textColor={Colors.color}
-              underlineColor={Colors.color}
-              activeUnderlineColor={Colors.button}
-              inputMode="text"
-              value={contactInfo.lastName}
-              onChangeText={(text) =>
-                setContactInfo((prev) => ({ ...prev, lastName: text }))
-              }
-            />
-            <TextInput
-              label="Cédula o documento de identidad"
-              className="bg-background w-full"
-              textColor={Colors.color}
-              underlineColor={Colors.color}
-              activeUnderlineColor={Colors.button}
-              inputMode="numeric"
-              value={contactInfo.id}
-              onChangeText={(text) =>
-                setContactInfo((prev) => ({ ...prev, id: text }))
-              }
-            />
-            <TextInput
-              label="Cargo (ej. gerente)"
-              className="bg-background w-full"
-              autoCapitalize="words"
-              textColor={Colors.color}
-              underlineColor={Colors.color}
-              activeUnderlineColor={Colors.button}
-              inputMode="text"
-              value={contactInfo.position}
-              onChangeText={(text) =>
-                setContactInfo((prev) => ({ ...prev, position: text }))
-              }
-            />
-            <TextInput
-              label="Teléfono de contacto"
-              className="bg-background w-full"
-              autoCapitalize="words"
-              textColor={Colors.color}
-              underlineColor={Colors.color}
-              activeUnderlineColor={Colors.button}
-              inputMode="numeric"
-              value={contactInfo.cellphone}
-              onChangeText={(text) =>
-                setContactInfo((prev) => ({ ...prev, cellphone: text }))
-              }
-            />
-            <TextInput
-              label="Correo electrónico personal / laboral"
-              className="bg-background w-full"
-              autoCapitalize="words"
-              textColor={Colors.color}
-              underlineColor={Colors.color}
-              activeUnderlineColor={Colors.button}
-              inputMode="email"
-              value={contactInfo.email}
-              onChangeText={(text) =>
-                setContactInfo((prev) => ({ ...prev, email: text }))
-              }
-            />
-          </View>
-          <Pressable onPress={() => router.push('/(slot)/(tabs)/donations/success')} className="bg-button p-4 rounded-xl active:bg-button/60">
-            <Text className="text-xl text-white font-semibold text-center">
-              Enviar datos
-            </Text>
-          </Pressable>
+              setSubmitting(false);
+            }}
+          >
+            {({
+              values,
+              errors,
+              touched,
+              isValid,
+              isSubmitting,
+
+              setFieldValue,
+              handleSubmit,
+              handleChange,
+              handleBlur,
+            }) => (
+              <>
+                <View className="bg-background w-[95%] p-4 rounded-xl mx-auto">
+                  <Text className="text-color text-lg font-semibold text-center">
+                    Información del establecimiento
+                  </Text>
+                  <InputThemed
+                    label="Razón social (obligatorio)"
+                    autoCapitalize="words"
+                    inputMode="text"
+                    value={values.companyName}
+                    updateText={handleChange("companyName")}
+                    onBlur={handleBlur("companyName")}
+                  />
+                  <CustomErrorMessage
+                    name="companyName"
+                    errors={errors}
+                    touched={touched}
+                  />
+                  <InputThemed
+                    label="Nombre comercial"
+                    autoCapitalize="words"
+                    inputMode="text"
+                    value={values.brandName}
+                    updateText={handleChange("brandName")}
+                    onBlur={handleBlur("brandName")}
+                  />
+                  <InputThemed
+                    label="RUC"
+                    inputMode="numeric"
+                    textColor={Colors.color}
+                    value={values.ruc}
+                    updateText={handleChange("ruc")}
+                    onBlur={handleBlur("ruc")}
+                  />
+                  <CustomErrorMessage
+                    name="ruc"
+                    errors={errors}
+                    touched={touched}
+                  />
+                  <Select
+                    title="Escoja el tipo de establecimiento (obligatorio)"
+                    elements={establishmentTypes}
+                    onSelected={(item) =>
+                      setFieldValue("establishmentType", item)
+                    }
+                    type="Tipo de establecimiento"
+                    onOtherValue={(value) =>
+                      setFieldValue("establishmentType", value)
+                    }
+                  />
+                  <CustomErrorMessage
+                    name="establishmentType"
+                    errors={errors}
+                    touched={touched}
+                  />
+                  <Select
+                    title="Escoja la categoría de comida (obligatorio)"
+                    elements={foodTypes}
+                    onSelected={(item) => setFieldValue("foodType", item)}
+                    type="Categoría de comida"
+                    onOtherValue={(value) => setFieldValue("foodType", value)}
+                  />
+                  <CustomErrorMessage
+                    name="foodType"
+                    errors={errors}
+                    touched={touched}
+                  />
+                  <InputThemed
+                    label="Dirección principal"
+                    autoCapitalize="words"
+                    inputMode="text"
+                    value={values.address}
+                    updateText={handleChange("address")}
+                  />
+                  <CustomErrorMessage
+                    name="address"
+                    errors={errors}
+                    touched={touched}
+                  />
+                  <InputThemed
+                    label="Teléfono del local"
+                    autoCapitalize="words"
+                    inputMode="numeric"
+                    value={values.phone}
+                    updateText={handleChange("phone")}
+                  />
+                  <InputThemed
+                    label="Correo electrónico del local"
+                    autoCapitalize="words"
+                    inputMode="email"
+                    value={values.email}
+                    updateText={handleChange("email")}
+                    onBlur={handleBlur("email")}
+                  />
+                </View>
+                <View className="bg-background w-[95%] p-4 rounded-xl mx-auto">
+                  <Text className="text-color text-lg font-semibold text-center">
+                    Información del Representante legal
+                  </Text>
+                  <InputThemed
+                    label="Nombres"
+                    autoCapitalize="words"
+                    inputMode="text"
+                    value={values.contactName}
+                    updateText={handleChange("contactName")}
+                    onBlur={handleBlur("contactName")}
+                  />
+                  <CustomErrorMessage
+                    name="contactName"
+                    errors={errors}
+                    touched={touched}
+                  />
+                  <InputThemed
+                    label="Apellidos"
+                    autoCapitalize="words"
+                    inputMode="text"
+                    value={values.contactLastName}
+                    updateText={handleChange("contactLastName")}
+                    onBlur={handleBlur("contactLastName")}
+                  />
+                  <CustomErrorMessage
+                    name="contactLastName"
+                    errors={errors}
+                    touched={touched}
+                  />
+                  <InputThemed
+                    label="Cédula o documento de identidad"
+                    inputMode="numeric"
+                    value={values.contactId}
+                    updateText={handleChange("contactId")}
+                    onBlur={handleBlur("contactId")}
+                  />
+                  <CustomErrorMessage
+                    name="contactId"
+                    errors={errors}
+                    touched={touched}
+                  />
+                  <InputThemed
+                    label="Cargo (ej. gerente)"
+                    autoCapitalize="words"
+                    inputMode="text"
+                    value={values.contactPosition}
+                    updateText={handleChange("contactPosition")}
+                    onBlur={handleBlur("contactPosition")}
+                  />
+                  <CustomErrorMessage
+                    name="contactPosition"
+                    errors={errors}
+                    touched={touched}
+                  />
+                  <InputThemed
+                    label="Teléfono de contacto"
+                    autoCapitalize="words"
+                    inputMode="numeric"
+                    value={values.contactPhone}
+                    updateText={handleChange("contactPhone")}
+                    onBlur={handleBlur("contactPhone")}
+                  />
+                  <CustomErrorMessage
+                    name="contactPhone"
+                    errors={errors}
+                    touched={touched}
+                  />
+                  <InputThemed
+                    label="Correo electrónico personal / laboral"
+                    autoCapitalize="words"
+                    inputMode="email"
+                    value={values.contactEmail}
+                    updateText={handleChange("contactEmail")}
+                    onBlur={handleBlur("contactEmail")}
+                  />
+                  <CustomErrorMessage
+                    name="contactEmail"
+                    errors={errors}
+                    touched={touched}
+                  />
+                  <Pressable
+                    disabled={!isValid || isSubmitting}
+                    onPress={() => handleSubmit()}
+                    className={`py-4 rounded-xl my-4 active:bg-button/60 ${isValid ? "bg-button" : "bg-gray-300"}`}
+                  >
+                    {isSubmitting ? (
+                      <ActivityIndicator color="white" />
+                    ) : (
+                      <Text className="text-white text-center text-xl font-semibold">
+                        Enviar datos
+                      </Text>
+                    )}
+                  </Pressable>
+                </View>
+              </>
+            )}
+          </Formik>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

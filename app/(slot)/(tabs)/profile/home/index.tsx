@@ -5,20 +5,30 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { router } from "expo-router";
 
 import { Colors } from "@/constants/Colors";
-import { logout } from "@/utils/auth";
 
 import HomeCards from "@/components/HomeCards";
 import { IconProfileHome } from "@/components/ui/Icons";
 import { ProfileTabParamList } from "../_layout";
 import { ActivityIndicator } from "react-native-paper";
-import { useCustomerStore } from "@/components/store/useDb";
+import { useAuthStore } from "@/presentation/auth/store/useAuthStore";
+import { useCustomer } from "@/presentation/customer/useCustomer";
 
 type NavigationProp = NativeStackNavigationProp<ProfileTabParamList>;
 
 const InfoProfile = () => {
   const navigation = useNavigation<NavigationProp>();
   const [loading, setIsLoading] = useState<boolean>(false);
-  const { customer } = useCustomerStore();
+  const { logout } = useAuthStore();
+
+  const { customerQuery } = useCustomer();
+
+  if (customerQuery.isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center" }}>
+        <ActivityIndicator color={Colors.button} size={50} />
+      </View>
+    );
+  }
 
   const handleLogout = async () => {
     setIsLoading(true);
@@ -27,6 +37,8 @@ const InfoProfile = () => {
     router.replace("/login");
   };
 
+  const customer = customerQuery.data!;
+
   return (
     <View className="px-6 my-4">
       <IconProfileHome
@@ -34,9 +46,9 @@ const InfoProfile = () => {
         color={Colors.color}
         className="text-center"
       />
-      <Text className="text-2xl text-color font-bold text-center">{customer?.name}</Text>
+      <Text className="text-2xl text-color font-bold text-center">{customer.name}</Text>
       <Text className="text-xl text-color font-light text-center">
-        {customer?.email}
+        {customer.email}
       </Text>
       <View className="flex flex-row gap-4 my-4 justify-center">
         <HomeCards
@@ -51,7 +63,7 @@ const InfoProfile = () => {
         />
       </View>
       <Pressable
-        onPress={() => handleLogout()}
+        onPress={handleLogout}
         className="bg-button p-4 rounded-xl active:bg-button/60 my-4"
       >
         {loading ? (

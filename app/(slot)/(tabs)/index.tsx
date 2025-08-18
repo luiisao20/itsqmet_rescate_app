@@ -1,22 +1,22 @@
-import { useCallback, useEffect } from "react";
-import { FlatList, ListRenderItem, Pressable, Text, View } from "react-native";
+import { FlatList, Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
+import { RefreshControl } from "react-native-gesture-handler";
+import { ActivityIndicator } from "react-native-paper";
 
 import HomeCards from "@/components/HomeCards";
 import PackCard from "@/components/PackCard";
 import { IconGo } from "@/components/ui/Icons";
-import { PackageDB } from "@/infraestructure/database/tables";
-import { usePacksStore } from "@/components/store/usePacksStore";
-import { ActivityIndicator } from "react-native-paper";
-import { Colors } from "@/constants/Colors";
+import { usePackages } from "@/presentation/packages/usePackages";
+import { Package } from "@/core/database/interfaces/packages";
+import { useFavoritePackage } from "@/presentation/packages/useFavoritePackages";
 
 export default function HomeTab() {
+  const { packagesQuery } = usePackages({ idCategory: 5 });
+  const { favoritePackagesQuery } = useFavoritePackage({ limit: 10 });
 
-  const { fetchPacks, packs, isLoading } = usePacksStore();
-
-  useEffect(() => {
-    fetchPacks('index', 5);
-  }, []);
+  if (favoritePackagesQuery.isPending) {
+    return <ActivityIndicator />;
+  }
 
   const HeaderComponent = () => (
     <>
@@ -52,38 +52,41 @@ export default function HomeTab() {
     </>
   );
 
-  const renderItem: ListRenderItem<PackageDB> = useCallback(
-    ({ item }) => (
+  const renderItem = (item: Package) => {
+    const isFavorite = favoritePackagesQuery.data?.some(
+      (fav) => fav.id === item.id
+    );
+
+    return (
       <View className="px-6 mb-4">
-        <PackCard info={item} />
+        <PackCard info={item} isFavorite={isFavorite} />
       </View>
-    ),
-    []
-  );
+    );
+  };
 
   return (
-    <>
-      {isLoading ? (
-        <ActivityIndicator size={60} color={Colors.color} />
-      ) : (
-        <FlatList
-          data={packs['index']}
-          keyExtractor={(_, index) => index.toString()}
-          ListHeaderComponent={<HeaderComponent />}
-          renderItem={renderItem}
-          removeClippedSubviews={true}
-          maxToRenderPerBatch={5}
-          updateCellsBatchingPeriod={100}
-          initialNumToRender={5}
-          windowSize={10}
-          getItemLayout={(_, index) => ({
-            length: 300,
-            offset: 300 * index,
-            index,
-          })}
-          showsVerticalScrollIndicator={false}
+    <FlatList
+      refreshControl={
+        <RefreshControl
+          refreshing={packagesQuery.isFetching}
+          onRefresh={async () => await packagesQuery.refetch()}
         />
-      )}
-    </>
+      }
+      data={favoritePackagesQuery.data}
+      keyExtractor={(item) => item.id.toString()}
+      ListHeaderComponent={<HeaderComponent />}
+      renderItem={({item}) => renderItem(item)}
+      removeClippedSubviews={true}
+      maxToRenderPerBatch={5}
+      updateCellsBatchingPeriod={100}
+      initialNumToRender={5}
+      windowSize={5}
+      getItemLayout={(_, index) => ({
+        length: 300,
+        offset: 300 * index,
+        index,
+      })}
+      showsVerticalScrollIndicator={false}
+    />
   );
 }

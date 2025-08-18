@@ -1,30 +1,46 @@
-import { View, Text, Pressable, ScrollView } from "react-native";
-import { IconMap, IconSelect } from "@/components/ui/Icons";
-import { Colors } from "@/constants/Colors";
 import { router } from "expo-router";
-import { useCustomerStore } from "@/components/store/useDb";
-import { useEffect } from "react";
-import { useAddressStore } from "@/components/store/useAddressStore";
+import { useEffect, useState } from "react";
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import { ActivityIndicator } from "react-native-paper";
 
+import { IconMap, IconSelect } from "@/components/ui/Icons";
+import { Colors } from "@/constants/Colors";
+import { AddressDB } from "@/core/database/interfaces/address";
+import { useAddresses } from "@/presentation/addresses/useAddresses";
+import { useAddressStore } from "@/presentation/addresses/store/useAddressStore";
+
 const AdressScreen = () => {
-  const { customer } = useCustomerStore();
-  const { setSelectedAddress, fetchAddresses, isLoading, addresses } =
-    useAddressStore();
+  const [addresses, setAddresses] = useState<AddressDB[]>([]);
+  const { addressesQuery } = useAddresses();
+  const { setSelectedAddress } = useAddressStore();
 
   useEffect(() => {
-    if (customer?.id) {
-      fetchAddresses(customer.id);
+    if (addressesQuery.data) {
+      setAddresses(addressesQuery.data);
     }
-  }, [customer]);
+  }, [addressesQuery.data]);
 
   return (
-    <ScrollView className="py-4 px-6">
+    <ScrollView
+      refreshControl={
+        <RefreshControl
+          refreshing={addressesQuery.isFetching}
+          onRefresh={async () => await addressesQuery.refetch()}
+        />
+      }
+      className="py-4 px-6"
+    >
       <Text className="text-2xl text-center text-color font-semibold mb-4">
         Ubicaciones guardadas
       </Text>
-      {isLoading ? (
-        <ActivityIndicator size={40} color={Colors.color} className="my-10" />
+      {addressesQuery.isLoading ? (
+        <ActivityIndicator color={Colors.button} size={30} className="my-10" />
       ) : (
         addresses.map((item, index) => (
           <View
@@ -48,7 +64,7 @@ const AdressScreen = () => {
               </Pressable>
               <Pressable
                 onPress={() => {
-                  setSelectedAddress(item.id!);
+                  setSelectedAddress(item);
                   router.replace("/(slot)/(cart)/pay");
                 }}
                 className="active:opacity-60"
@@ -60,7 +76,7 @@ const AdressScreen = () => {
         ))
       )}
       <Pressable
-        onPress={() => router.push("/(slot)/(cart)/position/new")}
+        onPress={() => router.push("/(slot)/(cart)/position/0")}
         className="bg-button p-4 rounded-xl mb-10"
       >
         <Text className="text-white font-semibold text-lg text-center">

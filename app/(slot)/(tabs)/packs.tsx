@@ -1,27 +1,25 @@
 import { FlatList, Pressable, Text, View } from "react-native";
-import { PackView } from "@/infraestructure/interfaces/PackInterface";
+import { ActivityIndicator } from "react-native-paper";
+import { router } from "expo-router";
+
 import Carousel from "@/components/PacksCarousel";
 import { IconGo } from "@/components/ui/Icons";
 import { Colors } from "@/constants/Colors";
-import { router } from "expo-router";
+import { useCategories } from "@/presentation/categories/useCategories";
+import { useFavoritePackage } from "@/presentation/packages/useFavoritePackages";
 
 const PacksTab = () => {
+  const { categoriesQuery } = useCategories();
+  const { favoritePackagesQuery } = useFavoritePackage({});
 
-  const packViews: PackView[] = [
-    {
-      key: "favorite",
-      subtitle: "Tus paquetes favoritos",
-    },
-    {
-      key: "popular",
-      subtitle: "Los más populares",
-    },
-  ];
+  if (categoriesQuery.isLoading || favoritePackagesQuery.isLoading) {
+    return <ActivityIndicator />;
+  }
 
   return (
     <View>
       <FlatList
-        data={packViews}
+        data={categoriesQuery.data}
         renderItem={({ item }) => (
           <View className="px-6 my-4">
             <View className="flex flex-row gap-4 items-center justify-between mb-4">
@@ -32,7 +30,7 @@ const PacksTab = () => {
                 onPress={() =>
                   router.push({
                     pathname: "/(slot)/(packs)/[id]",
-                    params: { id: item.key },
+                    params: { id: item.id },
                   })
                 }
                 className="flex flex-row items-baseline gap-2"
@@ -43,7 +41,7 @@ const PacksTab = () => {
                 <IconGo size={10} color={Colors.color} />
               </Pressable>
             </View>
-            <Carousel keyPack={item.key} />
+            <Carousel favorites={favoritePackagesQuery.data!} category={item} />
           </View>
         )}
       />

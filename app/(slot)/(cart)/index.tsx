@@ -1,9 +1,10 @@
 import { Pressable, Text, View } from "react-native";
-import PackCard from "@/components/PackCard";
 import { FlatList } from "react-native-gesture-handler";
-import { useCartStore } from "@/components/store/usePacksStore";
+
+import PackCard from "@/components/PackCard";
 import { IconEmpty } from "@/components/ui/Icons";
 import { Colors } from "@/constants/Colors";
+import { useCartStore } from "@/presentation/packages/store/usePacksStore";
 
 const IndexCar = () => {
   const { cart, clearCart } = useCartStore();

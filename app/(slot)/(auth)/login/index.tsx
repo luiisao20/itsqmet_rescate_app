@@ -5,8 +5,7 @@ import { router } from "expo-router";
 import { ActivityIndicator, TextInput } from "react-native-paper";
 import { Image } from "expo-image";
 import { Colors } from "@/constants/Colors";
-import { loginUser } from "@/utils/auth";
-import { ModalInput } from "@/components/Modal";
+import { useAuthStore } from "@/presentation/auth/store/useAuthStore";
 
 interface Login {
   email: string;
@@ -16,7 +15,7 @@ interface Login {
 }
 
 const LoginScreen = () => {
-  const [login, setLogin] = useState<Login>({
+  const [form, setForm] = useState<Login>({
     email: "",
     password: "",
     seePassword: true,
@@ -24,18 +23,14 @@ const LoginScreen = () => {
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [open, setIsOpen] = useState<boolean>(false);
+  const { login } = useAuthStore();
 
   const handleLogin = async () => {
     setIsLoading(true);
 
-    try {
-      const user = await loginUser(login.email, login.password);
-      router.push("/(slot)/(tabs)");
-    } catch (error) {
-      if (error instanceof Error) {
-        alert(error.message);
-      }
-    }
+    const wasSuccessful = await login(form.email, form.password);
+
+    if(wasSuccessful) router.push("/(slot)/(tabs)");
 
     setIsLoading(false);
   };
@@ -69,7 +64,7 @@ const LoginScreen = () => {
             activeUnderlineColor={Colors.button}
             inputMode="email"
             onChangeText={(text) =>
-              setLogin((prev) => ({
+              setForm((prev) => ({
                 ...prev,
                 email: text,
               }))
@@ -83,9 +78,9 @@ const LoginScreen = () => {
             textColor={Colors.color}
             underlineColor={Colors.color}
             activeUnderlineColor={Colors.button}
-            secureTextEntry={login.seePassword}
+            secureTextEntry={form.seePassword}
             onChangeText={(text) =>
-              setLogin((prev) => ({
+              setForm((prev) => ({
                 ...prev,
                 password: text,
               }))
@@ -93,13 +88,13 @@ const LoginScreen = () => {
             right={
               <TextInput.Icon
                 onPress={() =>
-                  setLogin((prev) => ({
+                  setForm((prev) => ({
                     ...prev,
                     seePassword: !prev.seePassword,
                     icon: prev.icon === "eye" ? "eye-off" : "eye",
                   }))
                 }
-                icon={login.icon}
+                icon={form.icon}
                 color={Colors.color}
               />
             }
@@ -118,10 +113,7 @@ const LoginScreen = () => {
             </Text>
           )}
         </Pressable>
-        <Pressable
-          onPress={() => setIsOpen(true)}
-          className="my-4"
-        >
+        <Pressable onPress={() => setIsOpen(true)} className="my-4">
           <Text className="text-lg">
             ¿Olvidaste tu contraseña?{" "}
             <Text className="text-color underline underline-offset-2">
@@ -138,14 +130,6 @@ const LoginScreen = () => {
           </Text>
         </Pressable>
       </View>
-      <ModalInput
-        isOpen={open}
-        inputMode="email"
-        label="Correo electrónico"
-        labelButton="Enviar"
-        message="Envía un correo de reestablecimiento de contraseña"
-        onClose={() => setIsOpen(false)}
-      />
     </KeyboardAvoidingView>
   );
 };

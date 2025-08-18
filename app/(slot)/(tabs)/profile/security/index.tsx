@@ -1,42 +1,44 @@
-import { View, Text, Pressable, ScrollView } from "react-native";
-import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  Alert,
+  RefreshControl,
+} from "react-native";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, TextInput } from "react-native-paper";
+import { Formik } from "formik";
+
 import { Colors } from "@/constants/Colors";
 import { IconGo } from "@/components/ui/Icons";
-import { ModalCard } from "@/components/Modal";
 import InputThemed from "@/components/ui/InputThemed";
-import { useAuthStore } from "@/components/store/useAuth";
-import { changePassword } from "@/utils/auth";
-import { CardDB } from "@/infraestructure/database/tables";
-import { getCards } from "@/utils/database";
-import { useCustomerStore } from "@/components/store/useDb";
+import { updatePasswordSchema } from "@/presentation/customer/error/get-error-form";
+import { CustomErrorMessage } from "@/components/CustomErrorMessage";
+import { useAuthStore } from "@/presentation/auth/store/useAuthStore";
+import { ModalCard } from "@/presentation/card/components/Modal";
+import { CardDB } from "@/core/database/interfaces/card";
+import { useCards } from "@/presentation/card/useCards";
 
 const SecurityProfile = () => {
-  const { user } = useAuthStore();
-  const [loading, setIsLoading] = useState<boolean>(false);
-  const [update, setUpdate] = useState<{
-    oldPassword: string;
-    newPassword: string;
-  }>({
+  const update: { oldPassword: string; newPassword: string } = {
     oldPassword: "",
     newPassword: "",
-  });
-
-  const [icon, setIcon] = useState<{
-    old: string;
-    seeOld: boolean;
-    new: string;
-    seeNew: boolean;
-  }>({
-    old: "eye",
-    new: "eye",
+  };
+  const [icon, setIcon] = useState<{ seeOld: boolean; seeNew: boolean }>({
     seeOld: true,
     seeNew: true,
   });
-  const [validForm, setIsValidForm] = useState<boolean>(false);
   const [customerCards, setCustomerCards] = useState<CardDB[] | null>();
-  const { customer } = useCustomerStore();
-  const [idCardToUpdate, setIdCardToUpdate] = useState<string | null>();
+  const [idCardToUpdate, setIdCardToUpdate] = useState<number | undefined>();
+  const { changePassword } = useAuthStore();
+  const { cardQuery } = useCards();
+
+  useEffect(() => {
+    if (cardQuery.data) {
+      setCustomerCards(cardQuery.data);
+    }
+  }, [cardQuery.data]);
 
   const [modalProps, setModalProps] = useState<{
     label: string;
@@ -48,29 +50,16 @@ const SecurityProfile = () => {
     showDelete: true,
   });
 
-  const handleUpdate = async () => {
-    if (user) {
-      setIsLoading(true);
-      try {
-        await changePassword(user, update.oldPassword, update.newPassword);
-        alert("¡La contraseña ha sido cambiada con éxito!");
-      } catch (error) {
-        if (error instanceof Error) alert(error.message);
-      }
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    getCards(customer?.id!)
-      .then((cards) => setCustomerCards(cards))
-      .catch((error) => console.log(error))
-      .finally(() => {
-      });
-  }, []);
-
   return (
-    <ScrollView className="px-6 my-4">
+    <ScrollView
+      refreshControl={
+        <RefreshControl
+          refreshing={cardQuery.isFetching}
+          onRefresh={async () => await cardQuery.refetch()}
+        />
+      }
+      className="px-6 my-4"
+    >
       <Text className="text-3xl font-semibold text-center text-color">
         Seguridad
       </Text>
@@ -78,104 +67,132 @@ const SecurityProfile = () => {
         <Text className="text-xl text-center text-color font-normal">
           Cambiar contraseña
         </Text>
-        <InputThemed
-          label="Ingrese su actual contraseña"
-          autoCapitalize="none"
-          secureTextEntry={icon.seeOld}
-          updateText={(text) =>
-            setUpdate((prev) => ({
-              ...prev,
-              oldPassword: text,
-            }))
-          }
-          right={
-            <TextInput.Icon
-              onPress={() =>
-                setIcon((prev) => ({
-                  ...prev,
-                  seeOld: !prev.seeOld,
-                  old: prev.old === "eye" ? "eye-off" : "eye",
-                }))
-              }
-              icon={icon.old}
-              color={Colors.color}
-            />
-          }
-        />
-        <InputThemed
-          label="Ingrese su actual contraseña"
-          autoCapitalize="none"
-          secureTextEntry={icon.seeNew}
-          updateText={(text, disabled) => {
-            setUpdate((prev) => ({
-              ...prev,
-              newPassword: text,
-            }));
-            setIsValidForm(disabled);
+        <Formik
+          validationSchema={updatePasswordSchema}
+          initialValues={update}
+          onSubmit={async (formLike, { setSubmitting }) => {
+            const success = await changePassword(
+              formLike.oldPassword,
+              formLike.newPassword
+            );
+
+            if (success)
+              Alert.alert(
+                "Exito",
+                "La contraseña se ha actualizado con éxito!"
+              );
+            setSubmitting(false);
           }}
-          right={
-            <TextInput.Icon
-              onPress={() =>
-                setIcon((prev) => ({
-                  ...prev,
-                  seeNew: !prev.seeNew,
-                  new: prev.new === "eye" ? "eye-off" : "eye",
-                }))
-              }
-              icon={icon.new}
-              color={Colors.color}
-            />
-          }
-        />
-        <Pressable
-          disabled={!validForm}
-          onPress={() => handleUpdate()}
-          className={`py-4 rounded-xl my-4 active:bg-button/60 ${validForm ? "bg-button" : "bg-gray-300"}`}
         >
-          {loading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text className="text-white text-center text-xl font-semibold">
-              Actualizar contraseña
-            </Text>
+          {({
+            values,
+            errors,
+            touched,
+            isValid,
+            isSubmitting,
+
+            handleSubmit,
+            handleChange,
+            handleBlur,
+          }) => (
+            <>
+              <InputThemed
+                label="Ingrese su actual contraseña"
+                autoCapitalize="none"
+                secureTextEntry={icon.seeOld}
+                value={values.oldPassword}
+                updateText={handleChange("oldPassword")}
+                onBlur={handleBlur("oldPassword")}
+                right={
+                  <TextInput.Icon
+                    onPress={() =>
+                      setIcon((prev) => ({ ...prev, seeOld: !prev.seeOld }))
+                    }
+                    icon={icon.seeOld ? "eye" : "eye-off"}
+                    color={Colors.color}
+                  />
+                }
+              />
+              <InputThemed
+                label="Ingrese su nueva contraseña"
+                autoCapitalize="none"
+                secureTextEntry={icon.seeNew}
+                value={values.newPassword}
+                updateText={handleChange("newPassword")}
+                onBlur={handleBlur("newPassword")}
+                right={
+                  <TextInput.Icon
+                    onPress={() =>
+                      setIcon((prev) => ({ ...prev, seeNew: !prev.seeNew }))
+                    }
+                    icon={icon.seeNew ? "eye" : "eye-off"}
+                    color={Colors.color}
+                  />
+                }
+              />
+              <CustomErrorMessage
+                name="newPassword"
+                errors={errors}
+                touched={touched}
+              />
+              <Pressable
+                disabled={!isValid}
+                onPress={() => handleSubmit()}
+                className={`py-4 rounded-xl mb-4 active:bg-button/60 ${isValid ? "bg-button" : "bg-gray-300"}`}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text className="text-white text-center text-xl font-semibold">
+                    Actualizar contraseña
+                  </Text>
+                )}
+              </Pressable>
+            </>
           )}
-        </Pressable>
+        </Formik>
       </View>
       <View className="p-4 my-4 border border-color rounded-xl flex gap-4">
         <Text className="text-xl text-center text-color font-normal">
           Administrar tarjetas
         </Text>
-        {customerCards?.map((item, index) => (
-          <Pressable
-            key={index}
-            onPress={() => {
-              setIdCardToUpdate(item.id);
-              setModalProps((prev) => ({
-                ...prev,
-                isOpen: true,
-              }));
-            }}
-            className="py-4 flex flex-row items-center justify-between border-b-2 border-color active:bg-gray-200"
-          >
-            <View>
-              <Text className="font-semibold text-xl text-color">
-                {item.type} ****{item.number}
-              </Text>
-              <Text className="font-normal text-lg text-color">
-                Activa {item.month} / {item.year}
-              </Text>
-            </View>
-            <IconGo size={20} />
-          </Pressable>
-        ))}
+        {cardQuery.isPending ? (
+          <ActivityIndicator color={Colors.button} size={50} />
+        ) : (
+          customerCards?.map((item, index) => (
+            <Pressable
+              key={index}
+              onPress={() => {
+                setIdCardToUpdate(item.id);
+                setModalProps((prev) => ({
+                  ...prev,
+                  isOpen: true,
+                  showDelete: true,
+                }));
+              }}
+              className="py-4 flex flex-row items-center justify-between border-b-2 border-color active:bg-gray-200"
+            >
+              <View>
+                <Text className="font-semibold text-xl text-color">
+                  {item.type} ****{item.number}
+                </Text>
+                <Text className="font-normal text-lg text-color">
+                  Activa {item.month} / {item.year}
+                </Text>
+              </View>
+              <IconGo size={20} />
+            </Pressable>
+          ))
+        )}
         <Pressable
-          onPress={() =>
+          onPress={() => {
+            setIdCardToUpdate(undefined);
             setModalProps((prev) => ({
               ...prev,
               isOpen: true,
               showDelete: false,
-            }))
-          }
+            }));
+          }}
           className="bg-button active:bg-button/60 p-4 rounded-xl mx-10"
         >
           <Text className="text-xl text-white font-semibold text-center">
@@ -188,10 +205,6 @@ const SecurityProfile = () => {
         isOpen={modalProps.isOpen}
         showDelete={modalProps.showDelete}
         onClose={() => setModalProps((prev) => ({ ...prev, isOpen: false }))}
-        onUpdateData={async () => {
-          const cards: CardDB[] | null = await getCards(customer?.id);
-          setCustomerCards(cards);
-        }}
       />
     </ScrollView>
   );

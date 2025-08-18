@@ -1,6 +1,3 @@
-import {
-  getCustomer,
-} from "@/utils/database";
 import { useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
@@ -11,7 +8,6 @@ const AdminScreen = () => {
   const getCustomerData = async () => {
     setIsLoading(true);
 
-    const res = await getCustomer("bravo.luis.1995@gmail.com");
     setIsLoading(false);
   };
 

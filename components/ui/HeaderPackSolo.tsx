@@ -1,33 +1,23 @@
-import { View, Text, useWindowDimensions, Pressable } from "react-native";
-import React from "react";
-import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import { Pressable, Text, useWindowDimensions, View } from "react-native";
+
+import { Colors } from "@/constants/Colors";
+import { Package } from "@/core/database/interfaces/packages";
+import { useFavStore } from "../../presentation/packages/store/usePacksStore";
 import { IconGoBackLine, IconHeartFilled, IconHeartOut } from "./Icons";
 import LogoPack from "./LogoPack";
-import { PackageDB } from "@/infraestructure/database/tables";
-import { useFavStore } from "../store/usePacksStore";
-import { Colors } from "@/constants/Colors";
 
 interface Props {
-  pack: PackageDB;
-  enabled: boolean;
+  pack: Package;
 }
 
-const HeaderPackSolo = ({ pack, enabled }: Props) => {
+const HeaderPackSolo = ({ pack }: Props) => {
   const { height } = useWindowDimensions();
-  const { getIsFavorite, addToFavorites, removeFromFavorites } = useFavStore();
+  const { getIsFavorite } = useFavStore();
 
-  const handleFavorite = () => {
-    const isFavorite = getIsFavorite(pack.id!);
-
-    if (isFavorite) {
-      removeFromFavorites(pack.id!);
-      return;
-    }
-
-    addToFavorites(pack);
-  };
+  const handleFavorite = () => {};
 
   return (
     <View className="relative">
@@ -54,7 +44,9 @@ const HeaderPackSolo = ({ pack, enabled }: Props) => {
         }}
       />
       <Image
-        source={{ uri: pack.restaurant?.background }}
+        source={{
+          uri: `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/public/images/background-general.png`,
+        }}
         style={{
           resizeMode: "contain",
           width: "100%",
@@ -79,13 +71,13 @@ const HeaderPackSolo = ({ pack, enabled }: Props) => {
           )}
         </Pressable>
       </View>
-      <LogoPack route={pack.restaurant?.logo!} title={pack.title} />
+      <LogoPack title={pack.title} />
       <View
-        className={`absolute p-2 rounded-xl bottom-[6rem] z-20 left-2 ${enabled ? "bg-button" : "bg-gray-500"}`}
+        className={`absolute p-2 rounded-xl bottom-[6rem] z-20 left-2 ${pack.packs_left > 0 ? "bg-button" : "bg-gray-500"}`}
       >
-        {enabled ? (
+        {pack.packs_left > 0 ? (
           <Text className="text-white font-semibold ">
-            Quedan {pack.packsLeft}
+            Quedan {pack.packs_left}
           </Text>
         ) : (
           <Text className="text-white font-semibold ">Agotado</Text>

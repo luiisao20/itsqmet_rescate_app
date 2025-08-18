@@ -1,14 +1,15 @@
-import { View, Text, Pressable, ScrollView } from "react-native";
-import { useEffect, useState } from "react";
+import { router } from "expo-router";
+import { useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
+
+import { Selection } from "@/components/Selection";
 import { IconCard, IconCash, IconGo } from "@/components/ui/Icons";
 import { Colors } from "@/constants/Colors";
-import { ModalPayments } from "@/components/Modal";
-import { Selection } from "@/components/Selection";
-import { router } from "expo-router";
-import { useAddressStore } from "@/components/store/useAddressStore";
-import { useCardStore, useCustomerStore } from "@/components/store/useDb";
-import { CardDB } from "@/infraestructure/database/tables";
-import {useCartStore} from "@/components/store/usePacksStore";
+import { CardDB } from "@/core/database/interfaces/card";
+import { useAddressStore } from "@/presentation/addresses/store/useAddressStore";
+import { useCustomer } from "@/presentation/customer/useCustomer";
+import { useCartStore } from "@/presentation/packages/store/usePacksStore";
+import { ModalPayments } from "@/presentation/payment/components/ModalPayments";
 
 export type Time = {
   id: string;
@@ -20,7 +21,8 @@ export type Time = {
 
 const PayScreen = () => {
   const [selected, setSelected] = useState<string>("2");
-  const {getTotalPrice} = useCartStore();
+  const { getTotalPrice } = useCartStore();
+  const { selectedAddress } = useAddressStore();
 
   const options: Time[] = [
     {
@@ -46,10 +48,13 @@ const PayScreen = () => {
     },
   ];
 
-  const [paymentMethod, setPaymentMethod] = useState<string>("4");
-  const { getSelectedAddress } = useAddressStore();
-  const { fetchCards, getSelectedCard, selectedCardId } = useCardStore();
-  const { customer } = useCustomerStore();
+  const [paymentMethod, setPaymentMethod] = useState<{
+    type: string;
+    card?: CardDB;
+  }>({
+    type: "4",
+    card: undefined,
+  });
 
   const [modalProps, setModalProps] = useState<{
     message: string;
@@ -61,16 +66,12 @@ const PayScreen = () => {
     index: 0,
   });
 
-  useEffect(() => {
-    fetchCards(customer?.id!);
-  }, []);
+  const { customerQuery } = useCustomer();
 
-  useEffect(() => {
-    renderPaymentMethod();
-  }, [selectedCardId]);
+  const customer = customerQuery.data;
 
   const renderPaymentMethod = () => {
-    const card: CardDB | null = getSelectedCard();
+    const { card } = paymentMethod;
 
     if (card) {
       return (
@@ -81,7 +82,7 @@ const PayScreen = () => {
               {card.type} {card.number}
             </Text>
             <Text>
-              {customer?.lastName} {customer?.name}
+              {customer?.last_name} {customer?.name}
             </Text>
           </View>
         </View>
@@ -113,8 +114,8 @@ const PayScreen = () => {
               ellipsizeMode="tail"
               className="text-lg font-light"
             >
-              {getSelectedAddress()
-                ? getSelectedAddress()?.description
+              {selectedAddress
+                ? selectedAddress.description
                 : "Escoger dirección"}
             </Text>
           </View>
@@ -154,7 +155,9 @@ const PayScreen = () => {
         <View className="bg-background p-4 rounded-xl flex gap-4">
           <View className="flex flex-row justify-between">
             <Text className="font-light text-lg text-color">Productos</Text>
-            <Text className="font-light text-lg text-color">$ {getTotalPrice().toFixed(2)}</Text>
+            <Text className="font-light text-lg text-color">
+              $ {getTotalPrice().toFixed(2)}
+            </Text>
           </View>
           <View className="flex flex-row justify-between">
             <Text className="font-light text-lg text-color">
@@ -174,9 +177,8 @@ const PayScreen = () => {
         isOpen={modalProps.isOpen}
         message={modalProps.message}
         onClose={() => setModalProps((prev) => ({ ...prev, isOpen: false }))}
-        onSelect={(id) => {
-          setPaymentMethod(id);
-          setModalProps((prev) => ({ ...prev, isOpen: false }));
+        onSelect={(id, card) => {
+          setPaymentMethod((prev) => ({ ...prev, type: id, card: card }));
         }}
       />
     </ScrollView>
