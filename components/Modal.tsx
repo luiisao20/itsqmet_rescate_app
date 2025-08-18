@@ -1,42 +1,7 @@
-import { useEffect, useState } from "react";
 import { View, Modal, ModalProps, Text, Pressable } from "react-native";
 import { IconClose, IconLike } from "./ui/Icons";
-import { ActivityIndicator, Portal, TextInput } from "react-native-paper";
+import { Portal } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
-import { Selection } from "./Selection";
-import { AddressDB } from "@/infraestructure/database/tables";
-import { router } from "expo-router";
-
-export interface CardInput {
-  number: string;
-  date: string;
-  cvv: string;
-  type: string;
-}
-
-export interface InputProps extends ModalProps {
-  isOpen: boolean;
-  label?: string;
-  inputMode?: "decimal" | "email" | "numeric" | "text";
-  textValue?: string;
-  infoCard?: CardInput;
-  infoLocation?: {
-    alias: string;
-    description: string;
-    latitude: number | null;
-    longitude: number | null;
-  };
-  showDelete?: boolean;
-  message?: string;
-  labelButton?: string;
-  idCurrentCard?: string | null;
-
-  onClose: () => void;
-  onSendData?: (text: string) => void;
-  onDeleteData?: (id: string) => void;
-  onUpdateData?: () => void;
-  onUpdateLocation?: () => void;
-}
 
 export interface InfoProps extends ModalProps {
   isOpen: boolean;
@@ -56,7 +21,7 @@ export const ModalInfo = ({
   cart = false,
 
   onClose,
-  onUnDone = () => console.log("No implementado"),
+  onUnDone = () => {},
   ...rest
 }: InfoProps) => {
   return (
@@ -94,131 +59,5 @@ export const ModalInfo = ({
         </View>
       </Modal>
     </Portal>
-  );
-};
-
-export const ModalLocation = ({
-  isOpen,
-  infoLocation = {
-    alias: "",
-    description: "",
-    latitude: null,
-    longitude: null,
-  },
-
-  onClose,
-  onUpdateLocation = () => console.log("no implementado"),
-  ...rest
-}: InputProps) => {
-  const [location, setLocation] = useState<{
-    alias: string;
-    description: string;
-  }>({ alias: "", description: "" });
-  const [loading, setLoading] = useState<boolean>(false);
-  const [success, setSuccess] = useState<boolean>(false);
-
-  useEffect(() => {
-    location.alias = infoLocation.alias;
-    location.description = infoLocation.description;
-  }, [infoLocation]);
-
-  const handleAddress = async () => {
-    setLoading(true);
-
-    if (infoLocation.latitude && infoLocation.longitude) {
-      try {
-        const newAddress: AddressDB = {
-          alias: location.alias,
-          description: location.description,
-          latitude: infoLocation.latitude,
-          longitude: infoLocation.longitude,
-        };
-        setSuccess(true);
-        router.dismiss();
-      } catch (error) {
-        console.log(error);
-        alert(`Ha ocurrido un error: ${error}`);
-      }
-    }
-    setLoading(false);
-  };
-
-  return (
-    <Modal
-      visible={isOpen}
-      transparent
-      animationType="fade"
-      statusBarTranslucent
-      {...rest}
-    >
-      <View className="flex-1 justify-center items-center bg-black/50">
-        <View className="bg-white w-[95%] rounded-xl py-8 px-10 justify-center items-center relative">
-          <Pressable
-            onPress={() => onClose()}
-            className="absolute top-4 right-4 active:bg-button/60 rounded-xl"
-          >
-            <IconClose className="text-color" />
-          </Pressable>
-          <Text className="text-xl font-normal text-center">
-            Actualiza la información de la ubicación
-          </Text>
-          <View className="w-full">
-            <TextInput
-              className="bg-white"
-              label="Alias"
-              autoCapitalize="words"
-              mode="flat"
-              inputMode="text"
-              textColor={Colors.color}
-              underlineColor={Colors.color}
-              activeUnderlineColor={Colors.button}
-              value={location.alias}
-              onChangeText={(text) =>
-                setLocation((prev) => ({
-                  ...prev,
-                  alias: text,
-                }))
-              }
-            />
-            <TextInput
-              className="bg-white"
-              label="Dirección"
-              autoCapitalize="words"
-              mode="flat"
-              inputMode="text"
-              textColor={Colors.color}
-              underlineColor={Colors.color}
-              activeUnderlineColor={Colors.button}
-              value={location.description}
-              onChangeText={(text) =>
-                setLocation((prev) => ({
-                  ...prev,
-                  description: text,
-                }))
-              }
-            />
-          </View>
-          {success && (
-            <Text className="mt-4 text-success">
-              ¡La dirección se ha guardado con éxito!
-            </Text>
-          )}
-          <View className="flex flex-row justify-start gap-4">
-            <Pressable
-              className="bg-button rounded-lg px-4 mt-4 active:bg-button/60"
-              onPress={handleAddress}
-            >
-              {loading ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <Text className="text-white py-3 text-center text-base font-bold">
-                  Actualizar
-                </Text>
-              )}
-            </Pressable>
-          </View>
-        </View>
-      </View>
-    </Modal>
   );
 };

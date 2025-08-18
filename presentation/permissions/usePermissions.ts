@@ -1,9 +1,10 @@
-import {
-  checkLocationPermission,
-  requestLocationPermission,
-} from "@/core/permissions/locations";
-import { PermissionStatus } from "@/infraestructure/interfaces/location";
 import { create } from "zustand";
+
+import {
+    checkLocationPermission,
+    requestLocationPermission,
+} from "@/core/permissions/locations";
+import { PermissionStatus } from "@/presentation/permissions/interfaces/location";
 
 interface PermissionState {
   locationStatus: PermissionStatus;

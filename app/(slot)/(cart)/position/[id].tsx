@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
-import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
-import { ModalLocation } from "@/presentation/addresses/components/ModalLocation";
 import { AddressDB } from "@/core/database/interfaces/address";
+import { ModalLocation } from "@/presentation/addresses/components/ModalLocation";
 import { useAddress } from "@/presentation/addresses/useAddresses";
 import MapViewComponent from "@/presentation/components/MapViewComponent";
-import { LatLng } from "@/infraestructure/interfaces/lat-lang";
+import { LatLng } from "@/presentation/permissions/interfaces/lat-lang";
 
 interface ModalProps {
   isOpen: boolean;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { router } from "expo-router";
 import { Image } from "expo-image";
 import { Pressable, PressableProps, Text, View } from "react-native";
@@ -7,11 +7,7 @@ import { LinearGradient } from "expo-linear-gradient";
 
 import { Colors } from "@/constants/Colors";
 import { Package } from "@/core/database/interfaces/packages";
-import {
-  useCartStore,
-  useFavStore,
-} from "../presentation/packages/store/usePacksStore";
-import { ModalInfo } from "./Modal";
+import { useCartStore } from "../presentation/packages/store/usePacksStore";
 import {
   IconAdd,
   IconHeartFilled,
@@ -22,11 +18,13 @@ import {
   IconTrash,
 } from "./ui/Icons";
 import LogoPack from "./ui/LogoPack";
+import { useFavoritePackage } from "@/presentation/packages/useFavoritePackages";
 
 interface Props extends PressableProps {
   info: PackItem;
   home?: boolean;
   className?: string;
+  isFavorite?: boolean;
 }
 
 export interface ModalProps {
@@ -40,27 +38,21 @@ interface PackItem extends Package {
   quantity?: number;
 }
 
-const PackCard = ({ info, home = true, className = "", ...rest }: Props) => {
+const PackCard = ({
+  info,
+  home = true,
+  className = "",
+  isFavorite = false,
+  ...rest
+}: Props) => {
   const [backgroundLoaded, setBackgroundLoaded] = useState(false);
-
   const { addToCart, decreaseQuantity } = useCartStore();
-  const { addToFavorites, removeFromFavorites, getIsFavorite } = useFavStore();
+  const { favoriteMutation, deleteFavoriteMutation } = useFavoritePackage({});
 
-  const [modalProps, setModalProps] = useState<ModalProps>({
-    product: "",
-    message: "",
-    isOpen: false,
-    cart: false,
-  });
-
-  useEffect(() => {
-    setModalProps((prev) => ({
-      ...prev,
-      product: info.title,
-    }));
-  }, []);
-
-  const handleFavorite = () => {};
+  const handleFavorite = () => {
+    if (isFavorite) deleteFavoriteMutation.mutate(info.id);
+    else favoriteMutation.mutate(info);
+  };
 
   const handleGoPack = () => {
     router.push({
@@ -139,11 +131,15 @@ const PackCard = ({ info, home = true, className = "", ...rest }: Props) => {
               {home ? (
                 <View className="flex gap-2">
                   <Pressable
-                    onPress={handleFavorite}
+                    disabled={
+                      deleteFavoriteMutation.isPending ||
+                      favoriteMutation.isPending
+                    }
+                    onPress={() => handleFavorite()}
                     {...rest}
                     className="bg-white p-2 rounded-full active:scale-125 z-20"
                   >
-                    {getIsFavorite(info.id) ? (
+                    {isFavorite ? (
                       <IconHeartFilled size={18} color={Colors.color} />
                     ) : (
                       <IconHeartOut size={18} />
@@ -152,14 +148,7 @@ const PackCard = ({ info, home = true, className = "", ...rest }: Props) => {
                   {info.packs_left > 0 && (
                     <Pressable
                       {...rest}
-                      onPress={() => {
-                        addToCart(info);
-                        setModalProps((prev) => ({
-                          ...prev,
-                          isOpen: true,
-                          message: "ha sido reservado en el carrito",
-                        }));
-                      }}
+                      onPress={() => addToCart(info)}
                       className="bg-white p-2 rounded-full active:scale-125 z-20"
                     >
                       <IconAdd size={18} />
@@ -227,13 +216,6 @@ const PackCard = ({ info, home = true, className = "", ...rest }: Props) => {
           </Text>
         </View>
       </Pressable>
-      <ModalInfo
-        product={modalProps.product}
-        message={modalProps.message}
-        cart={modalProps.cart}
-        onClose={() => setModalProps((prev) => ({ ...prev, isOpen: false }))}
-        isOpen={modalProps.isOpen}
-      />
     </View>
   );
 };

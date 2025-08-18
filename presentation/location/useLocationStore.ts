@@ -1,12 +1,13 @@
-import {
-  getCurrentAddress,
-  getCurrentLocation,
-  watchCurrentPosition,
-} from "@/core/location/locations";
-import { LocationGeocodedAddress } from "@/infraestructure/interfaces/geo-code";
-import { LatLng } from "@/infraestructure/interfaces/lat-lang";
 import { LocationSubscription } from "expo-location";
 import { create } from "zustand";
+
+import {
+    getCurrentAddress,
+    getCurrentLocation,
+    watchCurrentPosition,
+} from "@/core/location/locations";
+import { LocationGeocodedAddress } from "@/presentation/permissions/interfaces/geo-code";
+import { LatLng } from "@/presentation/permissions/interfaces/lat-lang";
 
 interface LocationState {
   lastKnwonLocation: LatLng | null;

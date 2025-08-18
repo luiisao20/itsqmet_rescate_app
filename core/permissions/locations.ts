@@ -1,4 +1,4 @@
-import { PermissionStatus } from "@/infraestructure/interfaces/location";
+import { PermissionStatus } from "@/presentation/permissions/interfaces/location";
 import * as Location from "expo-location";
 import { Alert, Linking } from "react-native";
 

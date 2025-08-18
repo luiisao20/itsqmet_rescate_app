@@ -8,12 +8,14 @@ import { Colors } from "@/constants/Colors";
 import PackCard from "@/components/PackCard";
 import { usePackages } from "@/presentation/packages/usePackages";
 import { useCategory } from "@/presentation/categories/useCategories";
+import { useFavoritePackage } from "@/presentation/packages/useFavoritePackages";
 
 const IndexPacks = () => {
   const { id } = useLocalSearchParams();
   const idCategory = parseInt(`${id}`);
   const { categoryQuery } = useCategory(idCategory);
   const { packagesQuery } = usePackages({ idCategory: idCategory, limit: 10 });
+  const { favoritePackagesQuery } = useFavoritePackage({});
   const navigation = useNavigation();
 
   useLayoutEffect(() => {
@@ -27,7 +29,11 @@ const IndexPacks = () => {
     }
   }, [categoryQuery.data]);
 
-  if (categoryQuery.isPending || packagesQuery.isLoading) {
+  if (
+    categoryQuery.isPending ||
+    packagesQuery.isPending ||
+    favoritePackagesQuery.isPending
+  ) {
     return <ActivityIndicator size={30} className="my-10" />;
   }
 
@@ -36,7 +42,14 @@ const IndexPacks = () => {
       <FlatList
         className="px-6 my-4"
         data={packagesQuery.data}
-        renderItem={({ item }) => <PackCard info={item} className="my-2" />}
+        renderItem={({ item }) => {
+          const isFavorite = favoritePackagesQuery.data?.some(
+            (fav) => fav.id === item.id
+          );
+          return (
+            <PackCard info={item} className="my-2" isFavorite={isFavorite} />
+          );
+        }}
       />
     </View>
   );

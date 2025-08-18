@@ -1,14 +1,14 @@
-import { Pressable, Text, View } from "react-native";
-import { router, Stack, usePathname } from "expo-router";
+import {router, Stack, usePathname} from "expo-router";
+import {Pressable, Text, View} from "react-native";
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
-import PermissionCheckerProvider from "@/components/providers/PermissionCheckProvider";
-import { IconGoBack, IconHome } from "@/components/ui/Icons";
-import { Colors } from "@/constants/Colors";
-import { useCartStore } from "@/presentation/packages/store/usePacksStore";
+import {IconGoBack, IconHome} from "@/components/ui/Icons";
+import {Colors} from "@/constants/Colors";
+import {useCartStore} from "@/presentation/packages/store/usePacksStore";
+import PermissionCheckerProvider from "@/presentation/permissions/providers/PermissionCheckProvider";
 
 const StackLayout = () => {
   const insets = useSafeAreaInsets();

@@ -1,6 +1,6 @@
-import { LatLng } from "@/infraestructure/interfaces/lat-lang";
+import { LocationGeocodedAddress } from "@/presentation/permissions/interfaces/geo-code";
+import { LatLng } from "@/presentation/permissions/interfaces/lat-lang";
 import * as Location from "expo-location";
-import { LocationGeocodedAddress } from "@/infraestructure/interfaces/geo-code";
 
 export const getCurrentLocation = async (): Promise<LatLng> => {
   try {

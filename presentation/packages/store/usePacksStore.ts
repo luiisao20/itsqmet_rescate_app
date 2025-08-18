@@ -1,5 +1,6 @@
-import { Package } from "@/core/database/interfaces/packages";
 import { create } from "zustand";
+
+import { Package } from "@/core/database/interfaces/packages";
 
 export interface PackItem extends Package {
   quantity?: number;
@@ -71,27 +72,15 @@ export const useCartStore = create<CartStore>()((set, get) => ({
 
 interface FavStore {
   favorites: Package[];
-
-  addToFavorites: (pack: Package) => void;
-  removeFromFavorites: (id: number) => void;
-  getFavorites: () => Package[];
+  
+  setFavorites: (packs: Package[]) => void;
   getIsFavorite: (id: number) => boolean;
 }
 
 export const useFavStore = create<FavStore>()((set, get) => ({
   favorites: [],
 
-  addToFavorites: (pack: Package) =>
-    set((state) => {
-      return { favorites: [...state.favorites, { ...pack }] };
-    }),
-
-  removeFromFavorites: (id) =>
-    set((state) => ({
-      favorites: state.favorites.filter((item) => item.id !== id),
-    })),
-
-  getFavorites: () => get().favorites,
+  setFavorites: (packs:Package[]) => set({favorites: packs}),
 
   getIsFavorite: (id) =>
     get().favorites.find((item) => item.id === id) !== undefined,

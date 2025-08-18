@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import MapView, { Region } from "react-native-maps";
 import { ActivityIndicator } from "react-native-paper";
 
-import { useLocationStore } from "@/presentation/location/useLocationStore";
 import { IconCompass, IconMapPin } from "@/components/ui/Icons";
 import { Colors } from "@/constants/Colors";
 import { AddressDB } from "@/core/database/interfaces/address";
-import { LatLng } from "@/infraestructure/interfaces/lat-lang";
+import { useLocationStore } from "@/presentation/location/useLocationStore";
+import { LatLng } from "@/presentation/permissions/interfaces/lat-lang";
 
 interface Props {
   locationRef?: AddressDB;

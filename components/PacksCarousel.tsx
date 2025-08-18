@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Text, View, useWindowDimensions } from "react-native";
+import { View, useWindowDimensions } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
 import { useSharedValue } from "react-native-reanimated";
 import Carousel, {
@@ -10,14 +10,15 @@ import Carousel, {
 import { Colors } from "@/constants/Colors";
 import { Category } from "@/core/database/interfaces/categories";
 import { usePackages } from "@/presentation/packages/usePackages";
-import { useFavStore } from "../presentation/packages/store/usePacksStore";
 import PackCard from "./PackCard";
+import { Package } from "@/core/database/interfaces/packages";
 
 interface Props {
   category: Category;
+  favorites: Package[];
 }
 
-const PacksCarousel = ({ category }: Props) => {
+const PacksCarousel = ({ category, favorites }: Props) => {
   const progress = useSharedValue<number>(0);
   const ref = useRef<ICarouselInstance | null>(null);
   const width: number = useWindowDimensions().width * 0.9;
@@ -30,18 +31,8 @@ const PacksCarousel = ({ category }: Props) => {
   };
   const { packagesQuery } = usePackages({ idCategory: category.id });
 
-  const { favorites } = useFavStore();
-
   if (packagesQuery.isLoading) {
     return <ActivityIndicator size={30} color={Colors.color} />;
-  }
-
-  if (category.title === "favorite" && favorites.length === 0) {
-    return (
-      <Text className="text-xl font-semibold text-center">
-        No existen paquetes favoritos, ¡Añade uno!
-      </Text>
-    );
   }
 
   return (
@@ -55,7 +46,10 @@ const PacksCarousel = ({ category }: Props) => {
             width={width}
             height={300}
             data={packagesQuery.data!}
-            renderItem={({ item }) => <PackCard className="mx-2" info={item} />}
+            renderItem={({ item }) => {
+              const isFavorite = favorites.some(fav => fav.id === item.id)
+              return <PackCard className="mx-2" info={item} isFavorite={isFavorite} />;
+            }}
           />
         </View>
         <Pagination.Basic
